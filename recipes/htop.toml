@@ -1,0 +1,22 @@
+[general]
+name = "HtopVM"
+description = "Lightweight VM running Htop"
+target_arch = "x86_64"
+
+[kernel]
+version = "5.4"
+options = { CONFIG_INET = "n", CONFIG_SERIAL = "y", CONFIG_BLOCK = "n" }
+patches = ["patches/disable_unused_drivers.patch"]
+
+[applications.htop]
+version = "latest"
+url = "http://hisham.hm/htop/releases/3.1.0/htop-3.1.0.tar.gz"
+config_script = "scripts/configure_htop.sh"
+
+[boot]
+cmdline = "console=ttyS0"
+initramfs = true
+
+[output]
+format = "qemu_image"
+image_name = "HtopVM.img"

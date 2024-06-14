@@ -1,0 +1,24 @@
+[general]
+name = "LynxVM"
+description = "Lightweight VM running the Lynx text-based web browser"
+target_arch = "x86_64"
+
+[kernel]
+version = "6.1.92"
+url = "http://192.168.1.110/linux-6.1.92.tar.xz"
+options = { INET = "y", SERIAL = "y", BLOCK = "y", EXPERT="y",PRINTK = "y", SERIAL_AMBA_PL011 = "y", SERIAL_AMBA_PL011_CONSOLE = "y", SERIAL_CORE = "y", SERIAL_CORE_CONSOLE = "y", TTY = "y",  ARM_AMBA = "y", EARLYCON = "y", EARLY_PRINTK = "y",DEV_MEM="y",VIRTIO_CONSOLE="y", BINFMT_ELF="y", CONFIG_BINFMT_SCRIPT="y", VT_CONSOLE="y",VT="y",HW_CONSOLE="y",SERIO_SERPORT="y",ELFCORE="y",CC_OPTIMIZE_FOR_SIZE="y",NO_BOOTMEM="y",SLOB="y",BLK_DEV_INITRD="y",BLK_DEV_RAM="y",SERIAL_DEV_BUS="y",SERIAL_DEV_CTRL_TTYPORT="y",INPUT_MOUSE="n",PROC_FS="y",SYSFS="y",STRIP_ASM_SYMS="y" }
+
+
+[applications.lynx]
+name = "lynx"
+version = "2.8.9"
+url = "http://192.168.1.110/lynx2.8.9rel.1.tar.gz"
+config_script = "./configure --disable-ssl CFLAGS=-static LDFLAGS=-static "
+
+[boot]
+cmdline = "console=ttyS0"
+initramfs = true
+
+[output]
+format = "qemu_image"
+image_name = "LynxVM.img"
