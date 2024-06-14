@@ -3,7 +3,7 @@ MuStack MicroVM
 
 MuStack MicroVM (msmv) is a specialized container build system designed to create and manage minimal, secure, and isolated Linux virtual machine images for microVM environments. 
 
-Using QEMU's [microvm](https://www.qemu.org/docs/master/system/i386/microvm.html) machine type, msmv ensures rapid boot times, enhanced security through isolation, and efficient resource management, for developers and hobbyists who require lightweight virtual testing environments.
+Using QEMU's [microvm](https://www.qemu.org/docs/master/system/i386/microvm.html) machine type, msmv provides rapid boot times, enhanced security through isolation, and efficient resource management, for developers and hobbyists who require lightweight virtual testing environments.
 
 Imagine Docker, except requiring a lot more effort. It’s like building a ship in a bottle — complex, rewarding, frustrating, and yes, a bit intense!
 
@@ -19,15 +19,15 @@ description = "Lightweight VM running the Lynx text-based web browser"
 target_arch = "x86_64"
 
 [kernel]
-version = "6.1.92"
-url = "http://192.168.1.110/linux-6.1.92.tar.xz"
+version = "6.9.4"
+url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.9.4.tar.xz"
 options = { INET = "y", SERIAL = "y", BLOCK = "y", EXPERT="y",PRINTK = "y", SERIAL_AMBA_PL011 = "y", SERIAL_AMBA_PL011_CONSOLE = "y", SERIAL_CORE = "y", SERIAL_CORE_CONSOLE = "y", TTY = "y",  ARM_AMBA = "y", EARLYCON = "y", EARLY_PRINTK = "y",DEV_MEM="y",VIRTIO_CONSOLE="y", BINFMT_ELF="y", CONFIG_BINFMT_SCRIPT="y", VT_CONSOLE="y",VT="y",HW_CONSOLE="y",SERIO_SERPORT="y",ELFCORE="y",CC_OPTIMIZE_FOR_SIZE="y",NO_BOOTMEM="y",SLOB="y",BLK_DEV_INITRD="y",BLK_DEV_RAM="y",SERIAL_DEV_BUS="y",SERIAL_DEV_CTRL_TTYPORT="y",INPUT_MOUSE="n",PROC_FS="y",SYSFS="y",STRIP_ASM_SYMS="y" }
 
 
 [applications.lynx]
 name = "lynx"
-version = "2.8.9"
-url = "http://192.168.1.110/lynx2.8.9rel.1.tar.gz"
+version = "2.9.2"
+url = "https://invisible-island.net/archives/lynx/tarballs/lynx2.9.2.tar.gz"
 config_script = "./configure --disable-ssl CFLAGS=-static LDFLAGS=-static "
 
 [boot]
