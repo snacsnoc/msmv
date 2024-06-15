@@ -1,10 +1,23 @@
 import logging
 import os
+import stat
 
 from msmv.util.host_command import run_command
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+"""Check if the device node exists and is of the correct type"""
+
+
+def device_exists(path, type_):
+    if os.path.exists(path):
+        st = os.stat(path)
+        if type_ == "c" and stat.S_ISCHR(st.st_mode):
+            return True
+        elif type_ == "b" and stat.S_ISBLK(st.st_mode):
+            return True
+    return False
 
 
 def setup_rootfs(output_dir):
@@ -14,6 +27,7 @@ def setup_rootfs(output_dir):
     # Create the essential directories
     essential_dirs = ["tmp", "proc", "sys", "bin", "dev", os.path.join("usr", "bin")]
     for dir_name in essential_dirs:
+        logger.info(f"Creating directory {dir_name} in {output_dir}")
         os.makedirs(os.path.join(output_dir, dir_name), exist_ok=True)
 
     # Create init script
@@ -35,6 +49,7 @@ done
 EOF
 """
         )
+        logger.info("Writing init script")
     os.chmod(os.path.join(output_dir, "init"), 0o775)
 
     # Create device nodes
@@ -47,10 +62,14 @@ EOF
         ("ram0", "b", "1", "0"),
     ]
     for node, type_, major, minor in device_nodes:
-        device_path = os.path.join(output_dir, "dev", node)
-        if not os.path.exists(device_path):
+        device_path = os.path.join("dev", node)
+        if not device_exists(device_path, type_):
+            logger.info(
+                f"Creating device nodes in {output_dir} with path {device_path}"
+            )
             run_command(["sudo", "mknod", device_path, type_, major, minor], output_dir)
             run_command(["sudo", "chmod", "666", device_path], output_dir)
+            logger.info("Finished creating device nodes")
 
 
 def make_compressed_cpio(output_dir):
