@@ -82,7 +82,8 @@ def configure_kernel(kernel_config, kernel_dir):
         raise FileNotFoundError(f"The directory {kernel_dir} does not exist.")
 
     print(f"Running 'make tinyconfig' in directory {kernel_dir}")
-    run_command(["make", "clean"], cwd=kernel_dir, timeout=3600)  # Timeout in seconds
+    # TODO: all kernel clean behaviour
+    # run_command(["make", "clean"], cwd=kernel_dir, timeout=3600)  # Timeout in seconds
 
     run_command(["make", "tinyconfig"], cwd=kernel_dir)
     print("applying kernel configs")
