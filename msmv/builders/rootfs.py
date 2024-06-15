@@ -8,6 +8,8 @@ from msmv.util.host_command import run_command
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+USE_C_INIT = True
+
 """Check if the device node exists and is of the correct type"""
 
 
@@ -34,28 +36,74 @@ def setup_rootfs(output_dir):
         logger.info(f"Creating directory {dir_name} in {output_dir}")
         os.makedirs(os.path.join(output_dir, dir_name), exist_ok=True)
 
-    # Create init script
-    with open(os.path.join(output_dir, "init"), "w") as f:
-        f.write(
-            """#!/bin/sh
-echo 'Initializing root filesystem...'
-mount -t proc none /proc
-mount -t sysfs none /sys
-mount -t devtmpfs none /dev
-echo 'Root filesystem initialized.'
-# Start a shell
-exec /bin/sh -i
+    if not USE_C_INIT:
+        # Create init script
+        with open(os.path.join(output_dir, "init"), "w") as f:
+            f.write(
+                """#!/bin/sh
+    echo 'Initializing root filesystem...'
+    mount -t proc none /proc
+    mount -t sysfs none /sys
+    mount -t devtmpfs none /dev
+    echo 'Root filesystem initialized.'
+    # Start a shell
+    exec /bin/sh -i
+    
+    # Infinite loop to prevent the script from exiting
+    while true; do
+        sleep 1
+    done
+    EOF
+    """
+            )
+            logger.info("Writing init script")
+        os.chmod(os.path.join(output_dir, "init"), 0o775)
 
-# Infinite loop to prevent the script from exiting
-while true; do
-    sleep 1
-done
-EOF
-"""
-        )
-        logger.info("Writing init script")
-    os.chmod(os.path.join(output_dir, "init"), 0o775)
     create_device_nodes(output_dir)
+
+
+""" DEBUG: A simple C init"""
+
+
+def compile_init_c(output_dir, start_program_path="/bin/sh"):
+    init_c_code = f"""
+#include <unistd.h>
+#include <stdio.h>
+
+int main(void) {{
+    printf("Starting the program...\\n");
+    fflush(stdout);
+
+    // Start the specified program
+    char *argv[] = {{"{start_program_path}", NULL}};
+    execv("{start_program_path}", argv);
+
+    // If execv fails
+    perror("Failed to start the specified program");
+    while (1) {{
+        sleep(1);
+    }}
+
+    return 0;
+}}
+"""
+    init_c_path = os.path.join(output_dir, "init.c")
+    with open(init_c_path, "w") as file:
+        file.write(init_c_code)
+    logger.info(f"C init script written to {init_c_path} using {start_program_path}")
+
+    # Compile the init program
+    init_executable_path = os.path.join(output_dir, "init")
+    try:
+        run_command(
+            ["gcc", init_c_path, "-o", init_executable_path, "-static"], cwd=output_dir
+        )
+        logger.info(f"Compiled init executable to {init_executable_path}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to compile init.c: {e}")
+
+    # Make sure the init executable is executable
+    os.chmod(init_executable_path, 0o755)
 
 
 def create_device_nodes(output_dir):
