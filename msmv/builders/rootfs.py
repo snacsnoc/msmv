@@ -1,6 +1,7 @@
 import logging
 import os
 import stat
+import subprocess
 
 from msmv.util.host_command import run_command
 
@@ -101,9 +102,6 @@ def make_compressed_cpio(output_dir):
     run_command(["gzip", "-9", f"{output_dir}/rootfs.cpio"], cwd=output_dir)
 
 
-import subprocess
-
-
 # def make_uncompressed_cpio(rootfs_path, output_dir):
 #     # Run the find command
 #     ps = subprocess.Popen(["find", rootfs_path, "-print0"], stdout=subprocess.PIPE)
@@ -134,6 +132,7 @@ def make_uncompressed_cpio(rootfs_path, output_dir):
     os.chdir(rootfs_path)
 
     # Create a pipeline to find all files and directories starting from the current directory
+    # TODO: refactor to use run_command()
     with subprocess.Popen(["find", ".", "-print0"], stdout=subprocess.PIPE) as ps:
         with open(cpio_path, "wb") as f:
             # Create the CPIO archive from the find command's output

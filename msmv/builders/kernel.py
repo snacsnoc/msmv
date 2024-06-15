@@ -1,4 +1,5 @@
 import os
+import shutil
 import tarfile
 
 import requests
@@ -97,7 +98,8 @@ def configure_kernel(kernel_config, kernel_dir):
         run_command(config_command, cwd=kernel_dir)
     run_command(["make", "olddefconfig"], cwd=kernel_dir)
 
-    """Apply given patches to the kernel source."""
+
+"""Apply given patches to the kernel source."""
 
 
 def apply_patches(patches, kernel_dir):
@@ -105,12 +107,25 @@ def apply_patches(patches, kernel_dir):
         run_command(["git", "apply", patch], cwd=kernel_dir, shell=False)
 
 
+""""Apply default kconfig selections after applying the user's selections"""
+
+
+def apply_default_kernel_options(kernel_dir):
+    # we need to run make olddefconfig to set default options after applying the user's TOML settings
+    run_command(["make", "olddefconfig"], cwd=kernel_dir)
+
+
 """Build the configured Linux kernel."""
 
 
 def build_kernel(kernel_dir):
-    # TODO: make this an intermediary function
-    # we need to run make olddefconfig to set default options after applying the user's TOML settings
-    # run_command(["make", "olddefconfig"], cwd=kernel_dir)
-
     run_command(["make", "-j8", "Image"], cwd=kernel_dir, timeout=3600)
+
+
+""""Copy the kernel to the output_vm directory"""
+
+
+def copy_kernel_to_output(output_dir):
+    # TODO: determine build arch to determine output kernel image
+    # Copy the kernel from arch/arm64/boot/Image to the specified dir
+    shutil.copy("arch/arm64/boot/Image", output_dir)

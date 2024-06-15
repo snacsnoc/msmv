@@ -14,6 +14,8 @@ from msmv.builders.kernel import (
     build_kernel,
     download_kernel_source,
     extract_kernel_tarball,
+    copy_kernel_to_output,
+    apply_default_kernel_options,
 )
 from msmv.builders.rootfs import setup_rootfs, make_uncompressed_cpio
 from msmv.config.parser import parse_config, get_first_application
@@ -91,6 +93,7 @@ def main():
     configure_kernel(config["kernel"], kernel_dir)
     if "patches" in config["kernel"]:
         apply_patches(config["kernel"]["patches"], kernel_dir)
+    apply_default_kernel_options(kernel_dir)
     build_kernel(kernel_dir)
 
     # TODO: do something better than grabbing the first application
@@ -110,7 +113,7 @@ def main():
 
     # Configure and build the application using the actual source directory path
     configure_and_build_app(app_details, apps_dir, app_source_dir, rootfs_dir)
-
+    copy_kernel_to_output(output_dir)
     logger.info("Creating uncompressed cpio")
     make_uncompressed_cpio(rootfs_dir, output_dir)
     # logger.info("Setting up boot params")
@@ -120,7 +123,10 @@ def main():
     #     cmdline="noshell initrd=/init root=/dev/ram console=ttyS0,115200",
     #     output_path=output_dir,
     # )
-    logger.info("built image! Done!")
+    logger.info("Built image! Done!")
+
+    logger.info(f"Kernel output path {kernel_path}")
+    logger.info(f"Initrd output path {initrd_path}")
     # Use script args to optionally clear the workspace after building
     # clean_workspace(workspace)
 
