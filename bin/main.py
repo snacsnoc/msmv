@@ -16,7 +16,7 @@ from msmv.builders.kernel import (
     extract_kernel_tarball,
 )
 from msmv.builders.rootfs import setup_rootfs, make_uncompressed_cpio
-from msmv.config.parser import parse_config
+from msmv.config.parser import parse_config, get_first_application
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -87,7 +87,8 @@ def main():
         apply_patches(config["kernel"]["patches"], kernel_dir)
     build_kernel(kernel_dir)
 
-    app_details = config["applications"]["lynx"]
+    # TODO: do something better than grabbing the first application
+    app_details = get_first_application(config)
 
     # Download and extract the application
     app_source_dir = download_and_extract_app(app_details, apps_dir)
