@@ -40,7 +40,12 @@ def main():
     parser.add_argument(
         "--config-file", type=str, help="Path to the config file in lynx.toml format"
     )
-
+    parser.add_argument(
+        "-b",
+        "--build-dir",
+        type=str,
+        help="Set the build directory, defaults to the current directory",
+    )
     args = parser.parse_args()
 
     if not args.config_file:
@@ -50,7 +55,8 @@ def main():
     # Read config and setup build workspace
     config = parse_config(args.config_file)
     vm_name = config["general"]["name"]
-    base_dir = f"./{vm_name}-build"
+
+    base_dir = args.build_dir or f"./{vm_name}-build"
     workspace = setup_workspace(base_dir)
 
     kernel_dir = os.path.join(workspace, "kernel")
@@ -99,7 +105,7 @@ def main():
     kernel_path = os.path.join(kernel_dir, "arch/arm64/boot/Image")
     initrd_path = os.path.join(output_dir, "rootfs.cpio")
 
-    logger.info("Setting up rootfs")
+    logger.info(f"Setting up rootfs in {rootfs_dir}")
     setup_rootfs(rootfs_dir)
 
     # Configure and build the application using the actual source directory path
