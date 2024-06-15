@@ -50,6 +50,10 @@ Run the build script with your configuration file:
 ```bash
 python bin/main.py --config-file msvm_config.toml
 ```
+__Options:__
+* `-c` or `--config-file` - sets the build (recipe) configuration file
+* `-b` or `--build-dir` - sets the build workspace and output directory 
+
 This script will:
 
 * Set up the workspace
