@@ -2,6 +2,10 @@ import argparse
 import logging
 import os
 import shutil
+import sys
+
+# Append the directory above 'bin' to sys.path to find the 'msmv' package
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from msmv.builders.application import download_and_extract_app, configure_and_build_app
 from msmv.builders.kernel import (
