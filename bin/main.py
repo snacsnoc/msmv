@@ -113,7 +113,7 @@ def main():
 
     # Configure and build the application using the actual source directory path
     configure_and_build_app(app_details, apps_dir, app_source_dir, rootfs_dir)
-    copy_kernel_to_output(output_dir)
+    copy_kernel_to_output(kernel_dir, output_dir)
     logger.info("Creating uncompressed cpio")
     make_uncompressed_cpio(rootfs_dir, output_dir)
     # logger.info("Setting up boot params")

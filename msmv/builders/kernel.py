@@ -125,7 +125,7 @@ def build_kernel(kernel_dir):
 """"Copy the kernel to the output_vm directory"""
 
 
-def copy_kernel_to_output(output_dir):
+def copy_kernel_to_output(kernel_dir, output_dir):
     # TODO: determine build arch to determine output kernel image
     # Copy the kernel from arch/arm64/boot/Image to the specified dir
-    shutil.copy("arch/arm64/boot/Image", output_dir)
+    shutil.copy(f"{kernel_dir}/arch/arm64/boot/Image", output_dir)
