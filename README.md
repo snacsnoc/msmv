@@ -43,11 +43,12 @@ image_name = "LynxVM.img"
 For other software, please see the `recipes/` directory for examples.
 
 # Building the Virtual Machine Image
+Note: it is recommended to use a virtual environment (venv)
 
 Run the build script with your configuration file:
 
 ```bash
-python msvm.py --config-file msvm_config.toml
+python bin/main.py --config-file msvm_config.toml
 ```
 This script will:
 
@@ -76,6 +77,15 @@ python vmtool.py /tmp/qmp-socket start   # Starts the VM
 python vmtool.py /tmp/qmp-socket stop    # Sends a shutdown signal to the VM
 python vmtool.py /tmp/qmp-socket status  # Queries the current status of the VM
 ```
+
+# TODO
+* Use build commands defined in recipe versus assuming `make`
+* Simplify Linux kernel downloading and optionally specify the download URL
+* Create `init` script framework to boot into desired application upon VM start
+* Use script argument to use ccache
+* Pass cross-compiler env vars (`CC`, etc) to build processes
+* Use architecture defined in recipe TOML versus host OS's arch
+
 # Contributing
 
 Please fork the repository, make your changes, and submit a pull request.
