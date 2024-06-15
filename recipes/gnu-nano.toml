@@ -1,0 +1,25 @@
+[general]
+name = "NanoVM"
+description = "MicroVM environment with customized nano text editor"
+target_arch = "arm64"
+
+[kernel]
+version = "6.9.4"
+url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.9.4.tar.xz"
+options = { FRAMEBUFFER_CONSOLE = "y", FONTS = "y", FONT_8x8 = "y", FONT_8x16 = "y", UNIX = "y", TMPFS = "y", DEVTMPFS = "y", DEVTMPFS_MOUNT = "y", PROC_FS = "y", SYSFS = "y", BLOCK = "y", PRINTK = "y", VT = "y", VT_CONSOLE = "y", HW_CONSOLE = "y", INPUT_KEYBOARD = "y", INPUT_EVDEV = "y", TTY = "y", UNIX98_PTYS = "y", EXT4_FS = "y", SQUASHFS = "y" }
+
+
+
+[applications.nano]
+name = "Nano"
+version = "8.0"
+url = "https://www.nano-editor.org/dist/v8/nano-8.0.tar.gz"
+config_script = "./configure CFLAGS=-static LDFLAGS=-static"
+
+[boot]
+cmdline = "console=ttyS0"
+initramfs = true
+
+[output]
+format = "qemu_image"
+image_name = "NanoVM.img"
