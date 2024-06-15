@@ -11,12 +11,15 @@ logging.basicConfig(level=logging.INFO)
 
 
 def device_exists(path, type_):
-    if os.path.exists(path):
-        st = os.stat(path)
-        if type_ == "c" and stat.S_ISCHR(st.st_mode):
-            return True
-        elif type_ == "b" and stat.S_ISBLK(st.st_mode):
-            return True
+    try:
+        if os.path.exists(path):
+            st = os.stat(path)
+            if (type_ == "c" and stat.S_ISCHR(st.st_mode)) or (
+                type_ == "b" and stat.S_ISBLK(st.st_mode)
+            ):
+                return True
+    except Exception as e:
+        logger.error(f"Error checking device at {path}: {str(e)}")
     return False
 
 
@@ -51,7 +54,10 @@ EOF
         )
         logger.info("Writing init script")
     os.chmod(os.path.join(output_dir, "init"), 0o775)
+    create_device_nodes(output_dir)
 
+
+def create_device_nodes(output_dir):
     # Create device nodes
     # need root privileges to create device nodes
     # does not work otherwise lol
@@ -70,6 +76,8 @@ EOF
             run_command(["sudo", "mknod", device_path, type_, major, minor], output_dir)
             run_command(["sudo", "chmod", "666", device_path], output_dir)
             logger.info("Finished creating device nodes")
+        else:
+            logger.info(f"Device node {device_path} already exists")
 
 
 def make_compressed_cpio(output_dir):
