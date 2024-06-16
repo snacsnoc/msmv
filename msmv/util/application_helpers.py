@@ -17,7 +17,7 @@ def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
     program_parts = start_program_path.split()
     program_args = ", ".join(f'"{part}"' for part in program_parts) + ", NULL"
 
-    # Network configuration
+    # Network configuration with routing
     network_setup_code = """
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock >= 0) {
@@ -27,8 +27,8 @@ def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
             if (fork() == 0) {
                 // Child process: setup network
                 printf("Network interface eth0 found, configuring...\\n");
-                char *setnet_args[] = {"/setnet", "eth0", "192.168.0.100", "255.255.255.0", NULL};
-                execv("/setnet", setnet_args);
+                char *setnet_cmd = "/setnet_r";  // setnet is expected to be configured for eth0 with predefined settings
+                execl(setnet_cmd, setnet_cmd, NULL);
                 perror("Failed to configure network with setnet");
                 exit(1);  // Ensure the child exits if execv fails
             }
@@ -43,11 +43,6 @@ def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
 
     # Mount required filesystems
     mount_dev_code = """
-    // Mount devtmpfs on /dev
-    if (mount("devtmpfs", "/dev", "devtmpfs", 0, NULL) != 0) {
-        perror("Failed to mount devtmpfs on /dev");
-        return -1;  // Exit if mount fails
-    }
     // Mount proc filesystem
     if (mount("proc", "/proc", "proc", 0, NULL) != 0) {
         perror("Failed to mount proc on /proc");
@@ -57,6 +52,11 @@ def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
     if (mount("sysfs", "/sys", "sysfs", 0, NULL) != 0) {
         perror("Failed to mount sysfs on /sys");
         return -1;  
+    }
+    // Mount devtmpfs on /dev
+    if (mount("devtmpfs", "/dev", "devtmpfs", 0, NULL) != 0) {
+        perror("Failed to mount devtmpfs on /dev");
+        return -1;  // Exit if mount fails
     }
     """
 
@@ -113,7 +113,7 @@ Use with: setnet eth0 192.168.0.10 255.255.255.0
 """
 
 
-def compile_network_config_utility(output_dir, file_name="setnet"):
+def compile_network_standalone_utility(output_dir, file_name="setnet"):
     c_code = """
 #include <stdio.h>
 #include <stdlib.h>
@@ -188,6 +188,118 @@ int main(int argc, char *argv[]) {
     os.chmod(executable_path, 0o755)
 
 
+"""
+Compiles a network configuration utility that sets up an IP address, netmask and route for a given network interface
+"""
+
+
+def compile_and_setup_net_route_utility(
+    output_dir,
+    file_name="setnet_r",
+    interface="eth0",
+    ip_address="192.168.0.100",
+    netmask="255.255.255.0",
+    gateway="192.168.0.1",
+):
+    c_code = f"""
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <linux/route.h>  
+#include <unistd.h>
+
+int main() {{
+    int fd;
+    struct ifreq ifr;
+    struct rtentry route;
+    struct sockaddr_in *addr;
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd < 0) {{
+        perror("Socket creation failed");
+        return 1;
+    }}
+
+    // Setting the IP address
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, "{interface}", IFNAMSIZ);
+    addr = (struct sockaddr_in *)&ifr.ifr_addr;
+    addr->sin_family = AF_INET;
+    inet_pton(AF_INET, "{ip_address}", &addr->sin_addr);
+    if (ioctl(fd, SIOCSIFADDR, &ifr) < 0) {{
+        perror("SIOCSIFADDR");
+    }}
+
+    // Set the Netmask
+    addr = (struct sockaddr_in *)&ifr.ifr_netmask;
+    addr->sin_family = AF_INET;
+    inet_pton(AF_INET, "{netmask}", &addr->sin_addr);
+    if (ioctl(fd, SIOCSIFNETMASK, &ifr) < 0) {{
+        perror("SIOCSIFNETMASK");
+    }}
+
+    // Set the interface flags
+    if (ioctl(fd, SIOCGIFFLAGS, &ifr) != -1) {{
+        ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
+        if (ioctl(fd, SIOCSIFFLAGS, &ifr) == -1) {{
+            perror("SIOCSIFFLAGS");
+        }}
+    }}
+
+    // Setting the default gateway
+    memset(&route, 0, sizeof(route));
+    addr = (struct sockaddr_in *)&route.rt_dst;
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = 0; // default route
+
+    addr = (struct sockaddr_in *)&route.rt_gateway;
+    addr->sin_family = AF_INET;
+    inet_pton(AF_INET, "{gateway}", &addr->sin_addr);
+
+    addr = (struct sockaddr_in *)&route.rt_genmask;
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = 0;
+
+    route.rt_flags = RTF_UP | RTF_GATEWAY;
+    route.rt_dev = "{interface}"; // Interface to use
+
+    if (ioctl(fd, SIOCADDRT, &route) < 0) {{
+        perror("SIOCADDRT");
+    }}
+
+    close(fd);
+    return 0;
+}}
+"""
+
+    c_file_path = os.path.join(output_dir, f"{file_name}.c")
+    executable_path = os.path.join(output_dir, file_name)
+
+    with open(c_file_path, "w") as c_file:
+        c_file.write(c_code)
+        logger.info(f"C source written to {c_file_path}")
+
+    # Compile the C source code into a static binary
+    try:
+        subprocess.run(
+            ["gcc", c_file_path, "-o", executable_path, "-static"],
+            check=True,
+            cwd=output_dir,
+        )
+        logger.info(f"Compiled {executable_path} successfully")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error compiling {file_name}.c: {str(e)}")
+
+    # Make the binary executable
+    os.chmod(executable_path, 0o755)
+
+    return executable_path
+
+
 """Find a terminal terminfo file and copy to target destination"""
 
 
@@ -218,3 +330,23 @@ def find_and_copy_vt(dest_dir):
             logger.info(f"Copied {file_path} to {dest_path}")
         else:
             logger.debug("No vt100 terminfo files found on the system.")
+
+
+"""
+    Create /etc directory and add nameserver configuration to resolv.conf in the specified rootfs directory.
+
+    Args:
+    rootfs_dir (str): The path to the root file system directory where /etc will be created.
+"""
+
+
+def setup_resolv_conf(rootfs_dir):
+    etc_path = os.path.join(rootfs_dir, "etc")
+    resolv_conf_path = os.path.join(etc_path, "resolv.conf")
+
+    os.makedirs(etc_path, exist_ok=True)
+
+    # Write nameserver configuration to resolv.conf
+    with open(resolv_conf_path, "w") as file:
+        file.write("nameserver 8.8.8.8\n")
+    logger.info(f"Created resolv.conf at {resolv_conf_path} with nameserver 8.8.8.8")

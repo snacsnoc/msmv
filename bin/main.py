@@ -25,7 +25,8 @@ from msmv.config.parser import parse_config, get_first_application
 from msmv.util.application_helpers import (
     compile_init_c,
     find_and_copy_vt,
-    compile_network_config_utility,
+    compile_and_setup_net_route_utility,
+    setup_resolv_conf,
 )
 
 logger = logging.getLogger(__name__)
@@ -133,11 +134,18 @@ def main():
     #
     # This negates us from having to include additional common utils
     # in the target VM at the expense of having to...write C code
-    if app_details["include_net"]:
-        compile_network_config_utility(rootfs_dir)
+    if app_details["include_net"] and config["boot"]["network"]:
+        # compile_network_config_utility(rootfs_dir)
+        compile_and_setup_net_route_utility(
+            rootfs_dir,
+            ip_address=config["boot"]["network"]["ip_address"],
+            netmask=config["boot"]["network"]["netmask"],
+            gateway=config["boot"]["network"]["gateway"],
+        )
+        setup_resolv_conf(rootfs_dir)
 
     # Copy a vt100 compile terminfo entry to the build system
-    #
+    #   Needed for any program needed to emulate a terminal
     # TODO: this is mostly a hack and subverts us from having to compile ncurses
     find_and_copy_vt(rootfs_dir)
 
