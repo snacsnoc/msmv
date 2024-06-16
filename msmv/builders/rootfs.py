@@ -72,7 +72,6 @@ def create_device_nodes(output_dir):
         ("ttyS0", "c", "4", "64"),
         ("tty", "c", "5", "0"),
         ("ram0", "b", "1", "0"),
-        ("eth0", "c", "10", "0"),
     ]
     for node, type_, major, minor in device_nodes:
         device_path = os.path.join("dev", node)
