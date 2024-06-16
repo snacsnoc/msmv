@@ -18,7 +18,7 @@ config_script = "./configure CFLAGS=-static LDFLAGS=-static"
 output_executable_path = "/usr/local/bin/nano"
 
 [boot]
-cmdline = "console=ttyS0"
+cmdline = "console=ttyAMA0"
 initramfs = true
 
 [output]
