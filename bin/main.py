@@ -10,7 +10,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from msmv.builders.application import (
     download_and_extract_app,
     configure_and_build_app,
-    find_and_copy_vt,
 )
 from msmv.builders.kernel import (
     configure_kernel,
@@ -21,8 +20,13 @@ from msmv.builders.kernel import (
     copy_kernel_to_output,
     apply_default_kernel_options,
 )
-from msmv.builders.rootfs import setup_rootfs, make_uncompressed_cpio, compile_init_c
+from msmv.builders.rootfs import setup_rootfs, make_uncompressed_cpio
 from msmv.config.parser import parse_config, get_first_application
+from msmv.util.application_helpers import (
+    compile_init_c,
+    find_and_copy_vt,
+    compile_network_config_utility,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -120,9 +124,16 @@ def main():
     # Write a simple init executable and have it run out app's output executable upon VM start
     compile_init_c(rootfs_dir, app_details["output_executable_path"])
 
+    # Compile and include an 'ifconfig' replacement in C
+    #
+    # This negates us from having to include additional common utils
+    # in the target VM at the expense of having to...write C code
+    # TODO: read from the config TOML file and run this conditionally
+    compile_network_config_utility(rootfs_dir)
+
     # Copy a vt100 compile terminfo entry to the build system
     #
-    # TODO: this is mostly a hack and subverts us from having to compile nurses
+    # TODO: this is mostly a hack and subverts us from having to compile ncurses
     find_and_copy_vt(rootfs_dir)
 
     copy_kernel_to_output(kernel_dir, output_dir)
