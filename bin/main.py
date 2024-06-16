@@ -7,7 +7,11 @@ import sys
 # Append the directory above 'bin' to sys.path to find the 'msmv' package
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from msmv.builders.application import download_and_extract_app, configure_and_build_app
+from msmv.builders.application import (
+    download_and_extract_app,
+    configure_and_build_app,
+    find_and_copy_vt,
+)
 from msmv.builders.kernel import (
     configure_kernel,
     apply_patches,
@@ -115,6 +119,12 @@ def main():
     configure_and_build_app(app_details, apps_dir, app_source_dir, rootfs_dir)
     # Write a simple init executable and have it run out app's output executable upon VM start
     compile_init_c(rootfs_dir, app_details["output_executable_path"])
+
+    # Copy a vt100 compile terminfo entry to the build system
+    #
+    # TODO: this is mostly a hack and subverts us from having to compile nurses
+    find_and_copy_vt(rootfs_dir)
+
     copy_kernel_to_output(kernel_dir, output_dir)
     logger.info("Creating uncompressed cpio")
     make_uncompressed_cpio(rootfs_dir, output_dir)

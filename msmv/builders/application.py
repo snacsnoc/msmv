@@ -1,5 +1,7 @@
 import logging
 import os
+import shutil
+import subprocess
 import tarfile
 
 from msmv.util.host_command import run_command
@@ -69,3 +71,35 @@ def configure_and_build_app(app_details, app_dir, app_source_dir, install_dir):
     # TODO: fix assumptions we will always use make
     run_command(["make", "install", f"DESTDIR={install_dir}"], cwd=app_source_dir)
     logger.info("Application installed.")
+
+
+"""Find a terminal terminfo file and copy to target destination"""
+
+
+def find_and_copy_vt(dest_dir):
+    # Define the terminfo name we are looking for
+    terminfo_name = "vt100"
+
+    # Locate the vt100 file from a common base directory
+    try:
+        result = subprocess.run(
+            ["find", "/usr/share/terminfo", "-name", terminfo_name],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        files = result.stdout.strip().split("\n")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to find terminfo files: {str(e)}")
+        return
+
+    terminfo_base_dir = os.path.join(dest_dir, "usr", "share", "terminfo", "v")
+    os.makedirs(terminfo_base_dir, exist_ok=True)
+    # Copy located files to the target directory
+    for file_path in files:
+        if file_path:
+            dest_path = os.path.join(terminfo_base_dir, "vt100")
+            shutil.copy(file_path, dest_path)
+            logger.info(f"Copied {file_path} to {dest_path}")
+        else:
+            logger.debug("No vt100 terminfo files found on the system.")
