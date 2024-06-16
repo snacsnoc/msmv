@@ -77,7 +77,7 @@ name = "lynx"
 version = "2.9.2"
 url = "https://invisible-island.net/archives/lynx/tarballs/lynx2.9.2.tar.gz"
 config_script = "./configure --enable-static-bin --with-ssl=/usr  --with-ssl-includes=/usr/include/openssl --with-ssl-libraries=/usr/lib CFLAGS=-static LDFLAGS='-L/usr/lib -static'"
-output_executable_path = "/usr/local/bin/lynx 207.241.224.2"
+output_executable_path = "/usr/local/bin/lynx news.ycombinator.com"
 include_net = true
 
 [boot]
