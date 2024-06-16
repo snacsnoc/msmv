@@ -158,4 +158,4 @@ def make_uncompressed_cpio(rootfs_path, output_dir):
             "Error in creating the CPIO archive, one of the subprocesses failed."
         )
 
-    logger.info("CPIO archive created successfully at:", cpio_path)
+    logger.info(f"CPIO archive created successfully at: {cpio_path}")
