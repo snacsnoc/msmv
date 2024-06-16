@@ -11,15 +11,17 @@ from msmv.util.host_command import run_command
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-"""Download the kernel source tarball from the specified URL with a progress bar."""
+"""Download the kernel source tarball, optionally with a specified URL"""
 
 
-def download_kernel_source(url, download_path):
+def download_kernel_source(kernel_version, download_path, url=None):
+    if url is None:
+        url = f"https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-{kernel_version}.tar.xz"
+
     try:
         response = requests.get(url, stream=True)
         if response.status_code == 200:
             total_size_in_bytes = int(response.headers.get("content-length", 0))
-            # 1 kilobyte
             chunk_size = 1024
             progress_bar = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
 
@@ -33,8 +35,12 @@ def download_kernel_source(url, download_path):
                 logger.error(
                     "WARNING: Downloaded file size does not match expected content length."
                 )
+        else:
+            logger.error(
+                f"Error downloading kernel source: HTTP {response.status_code}"
+            )
     except requests.exceptions.RequestException as e:
-        logger.info(f"Error downloading kernel source: {e}")
+        logger.error(f"Error downloading kernel source: {e}")
         raise Exception(f"Failed to download kernel source: {response.status_code}")
 
 

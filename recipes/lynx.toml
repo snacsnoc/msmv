@@ -5,7 +5,7 @@ target_arch = "aarch64"
 
 [kernel]
 version = "6.9.4"
-url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.9.4.tar.xz"
+
 [kernel.options]
 CC_OPTIMIZE_FOR_SIZE = "y"
 DEBUG_INFO_NONE = "y"

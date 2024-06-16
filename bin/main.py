@@ -83,9 +83,11 @@ def main():
     kernel_tar_path = os.path.join(
         workspace, f"linux-{config['kernel']['version']}.tar.xz"
     )
+    kernel_version = config["kernel"]["version"]
     if not os.path.exists(kernel_tar_path):
-        logger.info("no exist, downloading tar")
-        download_kernel_source(config["kernel"]["url"], kernel_tar_path)
+        logger.info("Kernel source tarball does not exist, downloading...")
+        kernel_url = config["kernel"].get("url")
+        download_kernel_source(kernel_version, kernel_tar_path, url=kernel_url)
 
     logger.info("extracting tar")
     extracted_kernel_dir = extract_kernel_tarball(kernel_tar_path, workspace)
