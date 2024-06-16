@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import tarfile
@@ -6,6 +7,9 @@ import requests
 from tqdm import tqdm
 
 from msmv.util.host_command import run_command
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 """Download the kernel source tarball from the specified URL with a progress bar."""
 
@@ -26,11 +30,11 @@ def download_kernel_source(url, download_path):
             progress_bar.close()
 
             if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
-                print(
+                logger.error(
                     "WARNING: Downloaded file size does not match expected content length."
                 )
     except requests.exceptions.RequestException as e:
-        print(f"Error downloading kernel source: {e}")
+        logger.info(f"Error downloading kernel source: {e}")
         raise Exception(f"Failed to download kernel source: {response.status_code}")
 
 
@@ -51,11 +55,11 @@ def extract_kernel_tarball(tar_path, extract_to):
     if ".tar" in base_name:
         base_name = base_name.split(".tar")[0]
     predicted_dir = os.path.join(extract_to, base_name)
-    print(f"Predicted directory name: {predicted_dir}")
+    logger.info(f"Predicted directory name: {predicted_dir}")
 
     # Skip extraction if the directory already exists
     if os.path.isdir(predicted_dir):
-        print(f"Directory {predicted_dir} already exists, skipping extraction.")
+        logger.info(f"Directory {predicted_dir} already exists, skipping extraction.")
         return predicted_dir
 
     with tarfile.open(tar_path, tar_open_mode) as tar:
@@ -78,25 +82,24 @@ def extract_kernel_tarball(tar_path, extract_to):
 
 def configure_kernel(kernel_config, kernel_dir):
     kernel_dir = os.path.abspath(kernel_dir)
-    print(f"Checking if directory exists: {kernel_dir}")
+    logger.info(f"Checking if directory exists: {kernel_dir}")
     if not os.path.exists(kernel_dir):
         raise FileNotFoundError(f"The directory {kernel_dir} does not exist.")
 
-    print(f"Running 'make tinyconfig' in directory {kernel_dir}")
+    logger.info(f"Running 'make tinyconfig' in directory {kernel_dir}")
     # TODO: all kernel clean behaviour
     # run_command(["make", "clean"], cwd=kernel_dir, timeout=3600)  # Timeout in seconds
 
     run_command(["make", "tinyconfig"], cwd=kernel_dir)
-    print("applying kernel configs")
+    logger.info("applying kernel configs")
     # Apply custom configurations from TOML
     for option, raw_value in kernel_config["options"].items():
         # Remove both single and double quotes
         value = raw_value.strip("'\"")
-        print(f"Setting {option} to {value}")
+        logger.info(f"Setting {option} to {value}")
         # Ensure the command is split into separate arguments
         config_command = ["scripts/config", "--set-val", option, value]
         run_command(config_command, cwd=kernel_dir)
-    run_command(["make", "olddefconfig"], cwd=kernel_dir)
 
 
 """Apply given patches to the kernel source."""
