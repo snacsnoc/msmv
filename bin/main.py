@@ -131,8 +131,8 @@ def main():
     #
     # This negates us from having to include additional common utils
     # in the target VM at the expense of having to...write C code
-    # TODO: read from the config TOML file and run this conditionally
-    compile_network_config_utility(rootfs_dir)
+    if app_details["include_net"]:
+        compile_network_config_utility(rootfs_dir)
 
     # Copy a vt100 compile terminfo entry to the build system
     #
@@ -143,11 +143,11 @@ def main():
     logger.info("Creating uncompressed cpio")
     make_uncompressed_cpio(rootfs_dir, output_dir)
     # logger.info("Setting up boot params")
-    # setup_boot_parameters(
+    # setup_boot_parameters("aarch64",
     #     kernel_path=kernel_path,
     #     initrd_path=initrd_path,
     #     cmdline="noshell initrd=/init root=/dev/ram console=ttyS0,115200",
-    #     output_path=output_dir,
+    #     output_path=output_dir, enable_network=True
     # )
     logger.info("Built image! Done!")
 

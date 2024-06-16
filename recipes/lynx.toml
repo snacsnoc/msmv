@@ -21,6 +21,11 @@ include_net = true
 cmdline = "console=ttyAMA0"
 initramfs = true
 
+[boot.network]
+enable = true  # Boolean to enable/disable network support
+interface = "net0"  # Defined interface name
+
+
 [output]
 format = "qemu_image"
 image_name = "LynxVM.img"

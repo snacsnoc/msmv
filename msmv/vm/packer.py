@@ -37,19 +37,48 @@ def setup_boot_parameters_with_image(kernel_path, initrd_path, image_path, cmdli
 """Setup boot parameters and run QEMU."""
 
 
-def setup_boot_parameters(kernel_path, initrd_path, cmdline, output_path):
-    run_command(
-        [
-            "qemu-system-aarch64",
-            "-M",
-            "microvm",
-            "-kernel",
-            kernel_path,
-            "-initrd",
-            initrd_path,
-            "-append",
-            cmdline,
-            "-nographic",
-        ],
-        cwd=output_path,
-    )
+def setup_boot_parameters(
+    target_arch,
+    kernel_path,
+    initrd_path,
+    cmdline,
+    output_path,
+    enable_network=False,
+    network_interface="net0",
+):
+    # Determine the appropriate qemu binary based on target_arch
+    qemu_binary = f"qemu-system-{target_arch}"
+
+    # Base command setup
+    command = [
+        qemu_binary,
+        "-M",
+        "virt",
+        "-cpu",
+        "max",
+        "-kernel",
+        kernel_path,
+        "-initrd",
+        initrd_path,
+        "-append",
+        cmdline,
+        "-serial",
+        "mon:stdio",
+        "-nographic",
+        "-m",
+        "128",
+    ]
+
+    # Add network options if networking is enabled
+    if enable_network:
+        command.extend(
+            [
+                "-netdev",
+                f"user,id={network_interface}",
+                "-device",
+                f"virtio-net-device,netdev={network_interface}",
+            ]
+        )
+
+    logger.info(f"Running QEMU with command: {' '.join(command)}")
+    run_command(command, cwd=output_path)
