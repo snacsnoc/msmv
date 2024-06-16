@@ -1,5 +1,6 @@
 import logging
 import os
+import shlex
 import tarfile
 
 from msmv.util.host_command import run_command
@@ -42,15 +43,8 @@ def download_and_extract_app(
 
 
 def configure_and_build_app(app_details, app_dir, app_source_dir, install_dir):
-    # app_source_dir = f"{app_dir}/{app_details['name']}"
-    # Run the configuration script
-    # run_command([app_details['config_script']], cwd=app_source_dir)
-    # config_script_path = os.path.join(
-    #    app_source_dir, app_details["config_script"].lstrip("./")
-    # )
-    # logger.info(f"Running config script: {config_script_path}")
-    # run_command([app_details["config_script"]], cwd=app_source_dir)
-    config_command = app_details["config_script"].split()
+    # Use shlex to split strings a shell would
+    config_command = shlex.split(app_details["config_script"])
 
     # Run the configure script
     logger.info(
