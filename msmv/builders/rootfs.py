@@ -8,12 +8,13 @@ from msmv.util.host_command import run_command
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+# DEBUG switch
 USE_C_INIT = True
 
 """Check if the device node exists and is of the correct type"""
 
 
-def device_exists(path, type_):
+def device_node_exists(path, type_):
     try:
         if os.path.exists(path):
             st = os.stat(path)
@@ -62,53 +63,6 @@ def setup_rootfs(output_dir):
     create_device_nodes(output_dir)
 
 
-""" DEBUG: A simple C init to run upon VM start"""
-
-
-def compile_init_c(output_dir, start_program_path="/bin/sh"):
-    init_c_code = f"""
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int main(void) {{
-    printf("Starting the program...\\n");
-    fflush(stdout);
-    // TODO: Fix this
-    setenv("TERM", "vt100", 1);
-    
-    // Start the specified program
-    char *argv[] = {{"{start_program_path}", NULL}};
-    execv("{start_program_path}", argv);
-
-    // If execv fails
-    perror("Failed to start the specified program");
-    while (1) {{
-        sleep(1);
-    }}
-
-    return 0;
-}}
-"""
-    init_c_path = os.path.join(output_dir, "init.c")
-    with open(init_c_path, "w") as file:
-        file.write(init_c_code)
-    logger.info(f"C init script written to {init_c_path} using {start_program_path}")
-
-    # Compile the init program
-    init_executable_path = os.path.join(output_dir, "init")
-    try:
-        run_command(
-            ["gcc", init_c_path, "-o", init_executable_path, "-static"], cwd=output_dir
-        )
-        logger.info(f"Compiled init executable to {init_executable_path}")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to compile init.c: {e}")
-
-    # Make sure the init executable is executable
-    os.chmod(init_executable_path, 0o755)
-
-
 def create_device_nodes(output_dir):
     # Create device nodes
     # need root privileges to create device nodes
@@ -118,10 +72,12 @@ def create_device_nodes(output_dir):
         ("ttyS0", "c", "4", "64"),
         ("tty", "c", "5", "0"),
         ("ram0", "b", "1", "0"),
+        ("eth0", "c", "10", "0"),
     ]
     for node, type_, major, minor in device_nodes:
         device_path = os.path.join("dev", node)
-        if not device_exists(device_path, type_):
+        o_device_path = os.path.join(output_dir, "dev", node)
+        if not device_node_exists(o_device_path, type_):
             logger.info(
                 f"Creating device nodes in {output_dir} with path {device_path}"
             )
@@ -202,4 +158,4 @@ def make_uncompressed_cpio(rootfs_path, output_dir):
             "Error in creating the CPIO archive, one of the subprocesses failed."
         )
 
-    print("CPIO archive created successfully at:", cpio_path)
+    logger.info("CPIO archive created successfully at:", cpio_path)
