@@ -14,29 +14,31 @@ Start by creating a TOML configuration file for your VM. Below is an example con
 
 ```toml
 [general]
-name = "LynxVM"
-description = "Lightweight VM running the Lynx text-based web browser"
-target_arch = "x86_64"
+name = "NanoVM"
+description = "MicroVM environment with customized nano text editor"
+target_arch = "arm64"
 
 [kernel]
 version = "6.9.4"
 url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.9.4.tar.xz"
-options = { INET = "y", SERIAL = "y", BLOCK = "y", EXPERT="y",PRINTK = "y", SERIAL_AMBA_PL011 = "y", SERIAL_AMBA_PL011_CONSOLE = "y", SERIAL_CORE = "y", SERIAL_CORE_CONSOLE = "y", TTY = "y",  ARM_AMBA = "y", EARLYCON = "y", EARLY_PRINTK = "y",DEV_MEM="y",VIRTIO_CONSOLE="y", BINFMT_ELF="y", CONFIG_BINFMT_SCRIPT="y", VT_CONSOLE="y",VT="y",HW_CONSOLE="y",SERIO_SERPORT="y",ELFCORE="y",CC_OPTIMIZE_FOR_SIZE="y",NO_BOOTMEM="y",SLOB="y",BLK_DEV_INITRD="y",BLK_DEV_RAM="y",SERIAL_DEV_BUS="y",SERIAL_DEV_CTRL_TTYPORT="y",INPUT_MOUSE="n",PROC_FS="y",SYSFS="y",STRIP_ASM_SYMS="y" }
+options = { BINFMT_ELF="y", BINFMT_SCRIPT="y", EXPERT="y", SWAP="n", FRAMEBUFFER_CONSOLE = "y", FONTS = "y", FONT_8x8 = "y", FONT_8x16 = "y", UNIX = "y", TMPFS = "y", DEVTMPFS = "y", DEVTMPFS_MOUNT = "y", PROC_FS = "y", SYSFS = "y", BLOCK = "y", PRINTK = "y", VT = "y", VT_CONSOLE = "y", HW_CONSOLE = "y", INPUT_KEYBOARD = "y", INPUT_MOUSE="n", INPUT_EVDEV = "y", TTY = "y", HID_SUPPORT="n", UNIX98_PTYS = "y", SERIO="y", EXT4_FS = "y", SQUASHFS = "y", FB = "y", FB_SIMPLE = "y", FB_CORE = "y", VGA_CONSOLE = "y", SYSFB="y", SYSFB_SIMPLEFB="y", DEBUG_INFO_NONE="y", PREEMPT_NONE_BUILD="y", TINY_RCU="y", BLK_DEV_INITRD="y", CC_OPTIMIZE_FOR_SIZE="y",SERIAL_AMBA_PL011="y", SERIAL_AMBA_PL011_CONSOLE="y",SERIAL_CORE="y", SERIAL_CORE_CONSOLE="y", SERIAL_DEV_BUS="y", SERIAL_DEV_CTRL_TTYPORT="y" }
 
 
-[applications.lynx]
-name = "lynx"
-version = "2.9.2"
-url = "https://invisible-island.net/archives/lynx/tarballs/lynx2.9.2.tar.gz"
-config_script = "./configure --disable-ssl CFLAGS=-static LDFLAGS=-static "
+
+[applications.nano]
+name = "Nano"
+version = "8.0"
+url = "https://www.nano-editor.org/dist/v8/nano-8.0.tar.gz"
+config_script = "./configure CFLAGS=-static LDFLAGS=-static"
+output_executable_path = "/usr/local/bin/nano"
 
 [boot]
-cmdline = "console=ttyS0"
+cmdline = "console=ttyAMA0"
 initramfs = true
 
 [output]
 format = "qemu_image"
-image_name = "LynxVM.img"
+image_name = "NanoVM.img"
 
 ```
 
@@ -68,10 +70,16 @@ This script will:
 
 After building, you can run the VM with QEMU:
 
-
+Examples:
 ```bash
 qemu-system-x86_64 -M microvm -drive file=output_vms/output_image.qcow2,if=virtio -m 128 -nographic -append "console=ttyS0" -qmp unix:/tmp/qmp-socket,server,nowait
 ```
+
+The `microvm` machine type is not supported for aarch64, so we must use `virt`:
+```bash
+qemu-system-aarch64 -M virt -cpu max -kernel Image -initrd rootfs.cpio  -append "init=/init rdinit=/init console=ttyAMA0" -serial mon:stdio -nographic 
+```
+
 # VM Management with VMTool
 
 msmv includes `VMTool`, a script for managing the VM lifecycle through the QEMU Machine Protocol (QMP):
@@ -89,6 +97,8 @@ python vmtool.py /tmp/qmp-socket status  # Queries the current status of the VM
 * Use script argument to use ccache
 * Pass cross-compiler env vars (`CC`, etc) to build processes
 * Use architecture defined in recipe TOML versus host OS's arch
+* Apply predefined kernel config sets (serial only, framebuffer, debugging etc) before user's config 
+  * To reduce requirement for the user to supply all necessary kconfig options in the recipe file
 
 # Contributing
 
