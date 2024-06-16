@@ -15,10 +15,23 @@ logging.basicConfig(level=logging.INFO)
 def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
     # Network configuration
     network_setup_code = """
-    char *setnet_args[] = {"/setnet", "eth0", "192.168.0.100", "255.255.255.0", NULL};
-    printf("Configuring network...\\n");
-    execv("/setnet", setnet_args);
-    perror("Failed to configure network with setnet");
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock >= 0) {
+        struct ifreq ifr;
+        strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
+        if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
+            // Interface exists, proceed with configuration
+            printf("Network interface eth0 found, configuring...\\n");
+            char *setnet_args[] = {"/setnet", "eth0", "192.168.0.100", "255.255.255.0", NULL};
+            execv("/setnet", setnet_args);
+            perror("Failed to configure network with setnet");
+        } else {
+            perror("Network interface eth0 not found");
+        }
+        close(sock);
+    } else {
+        perror("Failed to open socket");
+    }
     """
 
     # Mount required filesystems
@@ -45,7 +58,12 @@ def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
     #include <unistd.h>
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
     #include <sys/mount.h> 
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <net/if.h>
+    #include <sys/ioctl.h>
     int main(void) {{
         printf("Starting the program...\\n");
         fflush(stdout);
