@@ -46,6 +46,10 @@ For other software, please see the `recipes/` directory for examples.
 
 # Building the Virtual Machine Image
 Note: it is recommended to use a virtual environment (venv)
+```bash
+python3 -m venv venv
+pip install -r requirements.txt 
+```
 
 Run the build script with your configuration file:
 
