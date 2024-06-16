@@ -13,6 +13,10 @@ logging.basicConfig(level=logging.INFO)
 
 
 def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
+    # Split the start_program_path into parts for argv
+    program_parts = start_program_path.split()
+    program_args = ", ".join(f'"{part}"' for part in program_parts) + ", NULL"
+
     # Network configuration
     network_setup_code = """
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -20,11 +24,14 @@ def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
         struct ifreq ifr;
         strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
         if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
-            // Interface exists, proceed with configuration
-            printf("Network interface eth0 found, configuring...\\n");
-            char *setnet_args[] = {"/setnet", "eth0", "192.168.0.100", "255.255.255.0", NULL};
-            execv("/setnet", setnet_args);
-            perror("Failed to configure network with setnet");
+            if (fork() == 0) {
+                // Child process: setup network
+                printf("Network interface eth0 found, configuring...\\n");
+                char *setnet_args[] = {"/setnet", "eth0", "192.168.0.100", "255.255.255.0", NULL};
+                execv("/setnet", setnet_args);
+                perror("Failed to configure network with setnet");
+                exit(1);  // Ensure the child exits if execv fails
+            }
         } else {
             perror("Network interface eth0 not found");
         }
@@ -72,8 +79,8 @@ def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
         {'// Network configuration' if include_net else '// No network configuration'}
         {network_setup_code if include_net else ''}
         // Start the specified program
-        char *argv[] = {{"{start_program_path}", NULL}};
-        execv("{start_program_path}", argv);
+        char *argv[] = {{{program_args}}};
+        execv(argv[0], argv);
         perror("Failed to start the specified program");
         while (1) {{
             sleep(1);
