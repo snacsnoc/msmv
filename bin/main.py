@@ -122,6 +122,9 @@ def main():
     # Configure and build the application using the actual source directory path
     configure_and_build_app(app_details, apps_dir, app_source_dir, rootfs_dir)
     # Write a simple init executable and have it run out app's output executable upon VM start
+    logger.info(
+        f"Compiling init.c with start program {app_details['output_executable_path']}"
+    )
     compile_init_c(rootfs_dir, app_details["output_executable_path"])
 
     # Compile and include an 'ifconfig' replacement in C
