@@ -21,27 +21,47 @@ def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
     perror("Failed to configure network with setnet");
     """
 
+    # Mount required filesystems
+    mount_dev_code = """
+    // Mount devtmpfs on /dev
+    if (mount("devtmpfs", "/dev", "devtmpfs", 0, NULL) != 0) {
+        perror("Failed to mount devtmpfs on /dev");
+        return -1;  // Exit if mount fails
+    }
+    // Mount proc filesystem
+    if (mount("proc", "/proc", "proc", 0, NULL) != 0) {
+        perror("Failed to mount proc on /proc");
+        return -1;  
+    }
+    // Mount sysfs filesystem
+    if (mount("sysfs", "/sys", "sysfs", 0, NULL) != 0) {
+        perror("Failed to mount sysfs on /sys");
+        return -1;  
+    }
+    """
+
     # Main init code with conditional insertion of network setup
     init_c_code = f"""
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int main(void) {{
-    printf("Starting the program...\\n");
-    fflush(stdout);
-    setenv("TERM", "vt100", 1);
-    {'// Network configuration' if include_net else '// No network configuration'}
-    {network_setup_code if include_net else ''}
-    // Start the specified program
-    char *argv[] = {{"{start_program_path}", NULL}};
-    execv("{start_program_path}", argv);
-    perror("Failed to start the specified program");
-    while (1) {{
-        sleep(1);
+    #include <unistd.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <sys/mount.h> 
+    int main(void) {{
+        printf("Starting the program...\\n");
+        fflush(stdout);
+        {mount_dev_code}
+        setenv("TERM", "vt100", 1);
+        {'// Network configuration' if include_net else '// No network configuration'}
+        {network_setup_code if include_net else ''}
+        // Start the specified program
+        char *argv[] = {{"{start_program_path}", NULL}};
+        execv("{start_program_path}", argv);
+        perror("Failed to start the specified program");
+        while (1) {{
+            sleep(1);
+        }}
+        return 0;
     }}
-    return 0;
-}}
 """
     init_c_path = os.path.join(output_dir, "init.c")
     with open(init_c_path, "w") as file:
