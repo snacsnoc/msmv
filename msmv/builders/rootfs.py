@@ -62,18 +62,21 @@ def setup_rootfs(output_dir):
     create_device_nodes(output_dir)
 
 
-""" DEBUG: A simple C init"""
+""" DEBUG: A simple C init to run upon VM start"""
 
 
 def compile_init_c(output_dir, start_program_path="/bin/sh"):
     init_c_code = f"""
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(void) {{
     printf("Starting the program...\\n");
     fflush(stdout);
-
+    // TODO: Fix this
+    setenv("TERM", "vt100", 1);
+    
     // Start the specified program
     char *argv[] = {{"{start_program_path}", NULL}};
     execv("{start_program_path}", argv);
