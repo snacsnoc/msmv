@@ -21,7 +21,7 @@ class VMManager:
     def __init__(self, config_file="config.toml", build_dir="./"):
         self.build_dir = build_dir
         self.config_file = config_file
-        self.config = ConfigParser.parse_config(config_file)
+        self.config = ConfigParser.parse_config(self.config_file)
         self.workspace = os.path.join(
             build_dir, self.config["general"]["name"] + "-build"
         )
@@ -111,7 +111,7 @@ class VMManager:
         os.makedirs(output_dir, exist_ok=True)
 
         # Configuring the kernel
-        kernel_builder = KernelBuilder()
+        kernel_builder = KernelBuilder(config)
         # Handling kernel tarball and directory existence
         kernel_tar_path = os.path.join(
             workspace, f"linux-{config['kernel']['version']}.tar.xz"
@@ -145,7 +145,7 @@ class VMManager:
 
         # TODO: do something better than grabbing the first application
         app_details = ConfigParser.get_first_application(config)
-        app_builder = ApplicationBuilder()
+        app_builder = ApplicationBuilder(config)
         # Download and extract the application
         app_source_dir = app_builder.download_and_extract_app(app_details, apps_dir)
 
