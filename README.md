@@ -92,7 +92,8 @@ __Options:__
 __Environment variables:__
 * `MAKE_COMMAND` - specify the `make` command, defaults to `make`
   * For Mac OS, I would recommend `lkmake` https://github.com/markbhasawut/mac-linux-kdk
-* `CC` - specify the compiler `cc` to be used, defaults to `cc`
+* `CC` - specify the compiler to be used, defaults to `cc`
+* `LD` - specify the linker to be used, defaults to `ld`
 
 This script will:
 
@@ -123,9 +124,9 @@ qemu-system-aarch64 -M virt -cpu max -kernel Image -initrd rootfs.cpio  -append 
 msmv includes `VMTool`, a script for managing the VM lifecycle through the QEMU Machine Protocol (QMP):
 
 ```bash
-python vmtool.py /tmp/qmp-socket start   # Starts the VM
-python vmtool.py /tmp/qmp-socket stop    # Sends a shutdown signal to the VM
-python vmtool.py /tmp/qmp-socket status  # Queries the current status of the VM
+python -m msmv.bin.msmv start   # Starts the VM
+python -m msmv.bin.msmv stop    # Sends a shutdown signal to the VM
+python -m msmv.bin.msmv status  # Queries the current status of the VM
 ```
 
 # TODO
