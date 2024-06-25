@@ -27,7 +27,7 @@ class KernelBuilder:
 
     def __init__(self, config):
         self.config = config
-        self.make_command = os.getenv("MAKE_COMMAND", "make")
+        self.make_command = os.getenv("MAKE_COMMAND", "make -j8")
         self.target_arch = self.config.get("general", {}).get("target_arch", "x86")
         self.kernel_arch = self.ARCH_MAPPING.get(self.target_arch, self.target_arch)
         self.kernel_image = self.KERNEL_IMAGE_MAPPING.get(self.kernel_arch, "Image")
@@ -122,12 +122,11 @@ class KernelBuilder:
             raise FileNotFoundError(f"The directory {kernel_dir} does not exist.")
 
         logger.info(
-            f"Running '{self.env["CC"]} {self.make_command} tinyconfig' in directory {kernel_dir} for arch {self.env["ARCH"]}"
+            f'Running "{self.env["CC"]} {self.make_command} tinyconfig" in directory {kernel_dir} for arch {self.env["ARCH"]}'
         )
 
-        HostCommand.run_command(
-            [self.make_command, "tinyconfig"], cwd=kernel_dir, env=self.env
-        )
+        make_kernel_command = shlex.split(self.make_command) + ["tinyconfig"]
+        HostCommand.run_command(make_kernel_command, cwd=kernel_dir, env=self.env)
         logger.info("Applying kernel configs")
 
         # Apply custom configurations from TOML
@@ -153,15 +152,15 @@ class KernelBuilder:
 
     def apply_default_kernel_options(self, kernel_dir):
         # we need to run make olddefconfig to set default options after applying the user's TOML settings
-        HostCommand.run_command(
-            [self.make_command, "olddefconfig"], cwd=kernel_dir, env=self.env
-        )
+        make_kernel_command = shlex.split(self.make_command) + ["olddefconfig"]
+        HostCommand.run_command(make_kernel_command, cwd=kernel_dir, env=self.env)
 
     """Build the configured Linux kernel."""
 
     def build_kernel(self, kernel_dir):
+        make_kernel_command = shlex.split(self.make_command) + [self.kernel_image]
         HostCommand.run_command(
-            shlex.split(self.make_command), cwd=kernel_dir, timeout=3600, env=self.env
+            make_kernel_command, cwd=kernel_dir, timeout=3600, env=self.env
         )
 
     """"Copy the kernel to the output_vm directory"""
