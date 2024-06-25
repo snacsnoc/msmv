@@ -140,7 +140,9 @@ class VMManager:
 
         kernel_builder.configure_kernel(config["kernel"], dir_paths["kernel_dir"])
         if "patches" in config["kernel"]:
-            kernel_builder.apply_patches(config["kernel"]["patches"], dir_paths["kernel_dir"])
+            kernel_builder.apply_patches(
+                config["kernel"]["patches"], dir_paths["kernel_dir"]
+            )
         kernel_builder.apply_default_kernel_options(dir_paths["kernel_dir"])
         kernel_builder.build_kernel(dir_paths["kernel_dir"])
 
@@ -148,7 +150,9 @@ class VMManager:
         app_details = ConfigParser.get_first_application(config)
         app_builder = ApplicationBuilder(config)
         # Download and extract the application
-        app_source_dir = app_builder.download_and_extract_app(app_details, dir_paths["apps_dir"])
+        app_source_dir = app_builder.download_and_extract_app(
+            app_details, dir_paths["apps_dir"]
+        )
 
         # image_name = config["output"].get("image_name", "output_image")
         # image_path = os.path.join(output_dir, f"{image_name}.qcow2")
@@ -156,7 +160,7 @@ class VMManager:
         kernel_path = os.path.join(dir_paths["kernel_dir"], "arch/arm64/boot/Image")
         initrd_path = os.path.join(dir_paths["output_dir"], "rootfs.cpio")
 
-        logger.info(f"Setting up rootfs in {dir_paths["rootfs_dir"]}")
+        logger.info(f'Setting up rootfs in {dir_paths["rootfs_dir"]}')
         rootfs_builder = RootFSBuilder()
         rootfs_builder.setup_rootfs(dir_paths["rootfs_dir"])
 
@@ -176,7 +180,11 @@ class VMManager:
         #
         # This negates us from having to include additional common utils
         # in the target VM at the expense of having to...write C code
-        if app_details["include_net"] and config["boot"]["network"]:
+        if (
+            "include_net" in app_details
+            and app_details["include_net"]
+            and config["boot"].get("network")
+        ):
             # compile_network_config_utility(rootfs_dir)
             ApplicationHelpers.compile_and_setup_net_route_utility(
                 dir_paths["rootfs_dir"],
@@ -191,9 +199,13 @@ class VMManager:
         # TODO: this is mostly a hack and subverts us from having to compile ncurses
         ApplicationHelpers.find_and_copy_vt(dir_paths["rootfs_dir"])
 
-        kernel_builder.copy_kernel_to_output(dir_paths["kernel_dir"], dir_paths["output_dir"])
+        kernel_builder.copy_kernel_to_output(
+            dir_paths["kernel_dir"], dir_paths["output_dir"]
+        )
         logger.info("Creating uncompressed cpio")
-        rootfs_builder.make_uncompressed_cpio(dir_paths["rootfs_dir"], dir_paths["output_dir"])
+        rootfs_builder.make_uncompressed_cpio(
+            dir_paths["rootfs_dir"], dir_paths["output_dir"]
+        )
         # logger.info("Setting up boot params")
         # setup_boot_parameters("aarch64",
         #     kernel_path=kernel_path,
