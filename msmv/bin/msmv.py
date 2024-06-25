@@ -101,14 +101,15 @@ class VMManager:
         self.perform_build(config, workspace)
 
     def perform_build(self, config, workspace):
-        kernel_dir = os.path.join(workspace, "kernel")
-        apps_dir = os.path.join(workspace, "applications")
-        rootfs_dir = os.path.join(workspace, "rootfs")
-        output_dir = os.path.join(workspace, "output_vms")
-        os.makedirs(kernel_dir, exist_ok=True)
-        os.makedirs(apps_dir, exist_ok=True)
-        os.makedirs(rootfs_dir, exist_ok=True)
-        os.makedirs(output_dir, exist_ok=True)
+        dir_paths = {
+            "kernel_dir": os.path.join(workspace, "kernel"),
+            "apps_dir": os.path.join(workspace, "applications"),
+            "rootfs_dir": os.path.join(workspace, "rootfs"),
+            "output_dir": os.path.join(workspace, "output_vms"),
+        }
+
+        for dir_name, dir_path in dir_paths.items():
+            os.makedirs(dir_path, exist_ok=True)
 
         # Configuring the kernel
         kernel_builder = KernelBuilder(config)
@@ -131,44 +132,44 @@ class VMManager:
 
         if os.path.exists(extracted_kernel_dir):
             logger.info("extracted kernel dir exists....")
-            kernel_dir = extracted_kernel_dir
+            dir_paths["kernel_dir"] = extracted_kernel_dir
         else:
             # If extraction fails or directory does not exist, throw an error
             # TODO: do something productive
             raise Exception("Failed to locate the extracted kernel source directory.")
 
-        kernel_builder.configure_kernel(config["kernel"], kernel_dir)
+        kernel_builder.configure_kernel(config["kernel"], dir_paths["kernel_dir"])
         if "patches" in config["kernel"]:
-            kernel_builder.apply_patches(config["kernel"]["patches"], kernel_dir)
-        kernel_builder.apply_default_kernel_options(kernel_dir)
-        kernel_builder.build_kernel(kernel_dir)
+            kernel_builder.apply_patches(config["kernel"]["patches"], dir_paths["kernel_dir"])
+        kernel_builder.apply_default_kernel_options(dir_paths["kernel_dir"])
+        kernel_builder.build_kernel(dir_paths["kernel_dir"])
 
         # TODO: do something better than grabbing the first application
         app_details = ConfigParser.get_first_application(config)
         app_builder = ApplicationBuilder(config)
         # Download and extract the application
-        app_source_dir = app_builder.download_and_extract_app(app_details, apps_dir)
+        app_source_dir = app_builder.download_and_extract_app(app_details, dir_paths["apps_dir"])
 
         # image_name = config["output"].get("image_name", "output_image")
         # image_path = os.path.join(output_dir, f"{image_name}.qcow2")
         # create_qemu_image(image_path)
-        kernel_path = os.path.join(kernel_dir, "arch/arm64/boot/Image")
-        initrd_path = os.path.join(output_dir, "rootfs.cpio")
+        kernel_path = os.path.join(dir_paths["kernel_dir"], "arch/arm64/boot/Image")
+        initrd_path = os.path.join(dir_paths["output_dir"], "rootfs.cpio")
 
-        logger.info(f"Setting up rootfs in {rootfs_dir}")
+        logger.info(f"Setting up rootfs in {dir_paths["rootfs_dir"]}")
         rootfs_builder = RootFSBuilder()
-        rootfs_builder.setup_rootfs(rootfs_dir)
+        rootfs_builder.setup_rootfs(dir_paths["rootfs_dir"])
 
         # Configure and build the application using the actual source directory path
         app_builder.configure_and_build_app(
-            app_details, apps_dir, app_source_dir, rootfs_dir
+            app_details, dir_paths["apps_dir"], app_source_dir, dir_paths["rootfs_dir"]
         )
         # Write a simple init executable and have it run out app's output executable upon VM start
         logger.info(
             f"Compiling init.c with start program {app_details['output_executable_path']}"
         )
         ApplicationHelpers.compile_init_c(
-            rootfs_dir, app_details["output_executable_path"]
+            dir_paths["rootfs_dir"], app_details["output_executable_path"]
         )
 
         # Compile and include an 'ifconfig' replacement in C
@@ -178,21 +179,21 @@ class VMManager:
         if app_details["include_net"] and config["boot"]["network"]:
             # compile_network_config_utility(rootfs_dir)
             ApplicationHelpers.compile_and_setup_net_route_utility(
-                rootfs_dir,
+                dir_paths["rootfs_dir"],
                 ip_address=config["boot"]["network"]["ip_address"],
                 netmask=config["boot"]["network"]["netmask"],
                 gateway=config["boot"]["network"]["gateway"],
             )
-            ApplicationHelpers.setup_resolv_conf(rootfs_dir)
+            ApplicationHelpers.setup_resolv_conf(dir_paths["rootfs_dir"])
 
         # Copy a vt100 compile terminfo entry to the build system
         #   Needed for any program needed to emulate a terminal
         # TODO: this is mostly a hack and subverts us from having to compile ncurses
-        ApplicationHelpers.find_and_copy_vt(rootfs_dir)
+        ApplicationHelpers.find_and_copy_vt(dir_paths["rootfs_dir"])
 
-        kernel_builder.copy_kernel_to_output(kernel_dir, output_dir)
+        kernel_builder.copy_kernel_to_output(dir_paths["kernel_dir"], dir_paths["output_dir"])
         logger.info("Creating uncompressed cpio")
-        rootfs_builder.make_uncompressed_cpio(rootfs_dir, output_dir)
+        rootfs_builder.make_uncompressed_cpio(dir_paths["rootfs_dir"], dir_paths["output_dir"])
         # logger.info("Setting up boot params")
         # setup_boot_parameters("aarch64",
         #     kernel_path=kernel_path,
