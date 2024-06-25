@@ -60,6 +60,8 @@ name = "Nano"
 version = "8.0"
 url = "https://www.nano-editor.org/dist/v8/nano-8.0.tar.gz"
 config_script = "./configure CFLAGS=-static LDFLAGS=-static"
+build_command = "make -j8"
+install_command = "make install DESTDIR=/usr/local"
 output_executable_path = "/usr/local/bin/nano"
 
 [boot]
