@@ -10,19 +10,37 @@ logger.setLevel(logging.INFO)
 
 
 class ApplicationBuilder:
-    def __init__(self):
-        pass
+    def __init__(self, config):
+        self.config = config
+        self.default_make_command = os.getenv("MAKE_COMMAND", "make -j8")
+        self.default_install_command = os.getenv(
+            "MAKE_INSTALL_COMMAND", "make install DESTDIR={install_dir}"
+        )
+        # Default to 'cc' if not set
+        self.compiler = os.getenv("CC", "cc")
+
+        self.linker = os.getenv("LD", "ld")
+
+        # Read from config or use defaults
+        self.build_command = self.config.get("application", {}).get(
+            "build_command", self.default_make_command
+        )
+        self.install_command = self.config.get("application", {}).get(
+            "install_command", self.default_install_command
+        )
+
+        # Set the environment variables
+        self.env = os.environ.copy()
+        self.env["CC"] = self.compiler
 
     """Download and extract the application source code."""
 
     def download_and_extract_app(
         self, app_details, app_dir, common_tarball_name="application.tar.gz"
     ):
-        print(app_details)
-
         tar_path = os.path.join(app_dir, common_tarball_name)
         # Download the application tarball
-        print(f"Downloading tarball to: {tar_path}")
+        logger.info(f"Downloading tarball to: {tar_path}")
         HostCommand.run_command(
             ["wget", app_details["url"], "-O", common_tarball_name], cwd=app_dir
         )
@@ -55,20 +73,21 @@ class ApplicationBuilder:
 
         # Run the configure script
         logger.info(
-            f"Running config script: {' '.join(config_command)} in dir {app_source_dir}"
+            f"Running config script: {' '.join(config_command)} in dir {app_source_dir}  with {self.linker} {self.compiler}"
         )
-        HostCommand.run_command(config_command, cwd=app_source_dir)
+        HostCommand.run_command(config_command, cwd=app_source_dir, env=self.env)
 
         logger.info("Config script completed.")
 
-        logger.info("Building application...")
-        # Build the application using make
-        HostCommand.run_command(["make", "-j8"], cwd=app_source_dir)
+        logger.info(f"Building application {app_details} with {self.env}")
+        # Use the build command from the TOML file or the default if not specified
+        HostCommand.run_command(
+            shlex.split(self.build_command), cwd=app_source_dir, env=self.env
+        )
         logger.info("Application built.")
         logger.info(f"Installing application to {install_dir}...")
-        # Install the application using make
-        # TODO: fix assumptions we will always use make
+
         HostCommand.run_command(
-            ["make", "install", f"DESTDIR={install_dir}"], cwd=app_source_dir
+            shlex.split(self.install_command), cwd=app_source_dir, env=self.env
         )
         logger.info("Application installed.")
