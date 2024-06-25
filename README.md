@@ -83,7 +83,7 @@ pip install -r requirements.txt
 Run the build script with your configuration file:
 
 ```bash
-python bin/main.py --config-file msvm_config.toml
+python msmv/bin/main.py --config-file msvm_config.toml
 ```
 __Options:__
 * `-c` or `--config-file` - sets the build (recipe) configuration file
