@@ -149,7 +149,7 @@ class VMManager:
         # Download and extract the application
         app_source_dir = app_builder.download_and_extract_app(app_details, apps_dir)
 
-        image_name = config["output"].get("image_name", "output_image")
+        # image_name = config["output"].get("image_name", "output_image")
         # image_path = os.path.join(output_dir, f"{image_name}.qcow2")
         # create_qemu_image(image_path)
         kernel_path = os.path.join(kernel_dir, "arch/arm64/boot/Image")

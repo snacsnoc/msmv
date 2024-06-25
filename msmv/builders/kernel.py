@@ -6,7 +6,7 @@ import tarfile
 import requests
 from tqdm import tqdm
 
-from msmv.util.host_command import run_command
+from msmv.util.host_command import HostCommand
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -101,7 +101,7 @@ class KernelBuilder:
             f"Running '{self.make_command} tinyconfig' in directory {kernel_dir}"
         )
 
-        run_command([self.make_command, "tinyconfig"], cwd=kernel_dir)
+        HostCommand.run_command([self.make_command, "tinyconfig"], cwd=kernel_dir)
         logger.info("Applying kernel configs")
 
         # Apply custom configurations from TOML
@@ -111,24 +111,28 @@ class KernelBuilder:
             logger.info(f"Setting {option} to {value}")
             # Ensure the command is split into separate arguments
             config_command = ["scripts/config", "--set-val", option, value]
-            run_command(config_command, cwd=kernel_dir)
+            HostCommand.run_command(config_command, cwd=kernel_dir)
 
     """Apply given patches to the kernel source."""
 
     def apply_patches(self, patches, kernel_dir):
         for patch in patches:
-            run_command(["git", "apply", patch], cwd=kernel_dir, shell=False)
+            HostCommand.run_command(
+                ["git", "apply", patch], cwd=kernel_dir, shell=False
+            )
 
     """"Apply default kconfig selections after applying the user's selections"""
 
     def apply_default_kernel_options(self, kernel_dir):
         # we need to run make olddefconfig to set default options after applying the user's TOML settings
-        run_command([self.make_command, "olddefconfig"], cwd=kernel_dir)
+        HostCommand.run_command([self.make_command, "olddefconfig"], cwd=kernel_dir)
 
     """Build the configured Linux kernel."""
 
     def build_kernel(self, kernel_dir):
-        run_command([self.make_command, "-j8", "Image"], cwd=kernel_dir, timeout=3600)
+        HostCommand.run_command(
+            [self.make_command, "-j8", "Image"], cwd=kernel_dir, timeout=3600
+        )
 
     """"Copy the kernel to the output_vm directory"""
 

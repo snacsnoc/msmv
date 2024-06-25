@@ -9,12 +9,13 @@ logger.setLevel(logging.INFO)
 
 
 class VMBooter:
-    """Create a QEMU image."""
+
+    """Create a QEMU image"""
 
     @staticmethod
     def create_qemu_image(image_path, image_size="1G"):
         HostCommand.run_command(
-            ["qemu-img", "create", "-f", "qcow2", image_path, image_size]
+            ["qemu-img", "create", "-f", "qcow2", image_path, image_size], cwd="."
         )
 
     """Setup boot parameters and run QEMU with an attached disk image"""

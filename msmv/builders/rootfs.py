@@ -3,7 +3,7 @@ import os
 import stat
 import subprocess
 
-from msmv.util.host_command import run_command
+from msmv.util.host_command import HostCommand
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -89,17 +89,19 @@ class RootFSBuilder:
                 logger.info(
                     f"Creating device nodes in {output_dir} with path {device_path}"
                 )
-                run_command(
+                HostCommand.run_command(
                     ["sudo", "mknod", device_path, type_, major, minor], output_dir
                 )
-                run_command(["sudo", "chmod", "666", device_path], output_dir)
+                HostCommand.run_command(
+                    ["sudo", "chmod", "666", device_path], output_dir
+                )
                 logger.info("Finished creating device nodes")
             else:
                 logger.info(f"Device node {device_path} already exists")
 
     def make_compressed_cpio(self, output_dir):
         # Create cpio archive without compression
-        run_command(
+        HostCommand.run_command(
             [
                 "find",
                 output_dir,
@@ -115,7 +117,9 @@ class RootFSBuilder:
         )
 
         # Compress the cpio archive
-        run_command(["gzip", "-9", f"{output_dir}/rootfs.cpio"], cwd=output_dir)
+        HostCommand.run_command(
+            ["gzip", "-9", f"{output_dir}/rootfs.cpio"], cwd=output_dir
+        )
 
     def make_uncompressed_cpio(self, rootfs_path, output_dir):
         # Save the current directory before changing it

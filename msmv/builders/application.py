@@ -3,7 +3,7 @@ import os
 import shlex
 import tarfile
 
-from msmv.util.host_command import run_command
+from msmv.util.host_command import HostCommand
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -23,7 +23,7 @@ class ApplicationBuilder:
         tar_path = os.path.join(app_dir, common_tarball_name)
         # Download the application tarball
         print(f"Downloading tarball to: {tar_path}")
-        run_command(
+        HostCommand.run_command(
             ["wget", app_details["url"], "-O", common_tarball_name], cwd=app_dir
         )
         # Extract the application
@@ -33,7 +33,9 @@ class ApplicationBuilder:
             logger.error("Tarball file does not exist.")
             return None
 
-        run_command(["tar", "-xzf", common_tarball_name, "-C", "."], cwd=app_dir)
+        HostCommand.run_command(
+            ["tar", "-xzf", common_tarball_name, "-C", "."], cwd=app_dir
+        )
 
         logger.info("Automatically finding the directory name of extracted tarball")
 
@@ -55,16 +57,18 @@ class ApplicationBuilder:
         logger.info(
             f"Running config script: {' '.join(config_command)} in dir {app_source_dir}"
         )
-        run_command(config_command, cwd=app_source_dir)
+        HostCommand.run_command(config_command, cwd=app_source_dir)
 
         logger.info("Config script completed.")
 
         logger.info("Building application...")
         # Build the application using make
-        run_command(["make", "-j8"], cwd=app_source_dir)
+        HostCommand.run_command(["make", "-j8"], cwd=app_source_dir)
         logger.info("Application built.")
         logger.info(f"Installing application to {install_dir}...")
         # Install the application using make
         # TODO: fix assumptions we will always use make
-        run_command(["make", "install", f"DESTDIR={install_dir}"], cwd=app_source_dir)
+        HostCommand.run_command(
+            ["make", "install", f"DESTDIR={install_dir}"], cwd=app_source_dir
+        )
         logger.info("Application installed.")
