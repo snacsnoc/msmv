@@ -13,6 +13,7 @@ class HostCommand:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
+        env=None,
     ):
         print(f"Running command: {' '.join(command)} in dir {cwd}")
         try:
@@ -24,6 +25,7 @@ class HostCommand:
                 text=True,
                 cwd=cwd,
                 shell=shell,
+                env=env,
             ) as process:
                 try:
                     for line in process.stdout:
