@@ -90,8 +90,9 @@ __Options:__
 * `-b` or `--build-dir` - sets the build workspace and output directory
 
 __Environment variables:__
-* `MAKE_COMMAND` - specify the `make` command
+* `MAKE_COMMAND` - specify the `make` command, defaults to `make`
   * For Mac OS, I would recommend `lkmake` https://github.com/markbhasawut/mac-linux-kdk
+* `CC` - specify the compiler `cc` to be used, defaults to `cc`
 
 This script will:
 
