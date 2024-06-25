@@ -87,7 +87,11 @@ python -m msmv.bin.msmv --config-file msvm_config.toml
 ```
 __Options:__
 * `-c` or `--config-file` - sets the build (recipe) configuration file
-* `-b` or `--build-dir` - sets the build workspace and output directory 
+* `-b` or `--build-dir` - sets the build workspace and output directory
+
+__Environment variables:__
+* `MAKE_COMMAND` - specify the `make` command
+  * For Mac OS, I would recommend `lkmake` https://github.com/markbhasawut/mac-linux-kdk
 
 This script will:
 
