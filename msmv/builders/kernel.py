@@ -40,6 +40,45 @@ class KernelBuilder:
         self.env["CC"] = self.compiler
         self.env["ARCH"] = self.kernel_arch
 
+    def setup_and_build_kernel(self, workspace):
+        dir_paths = self.setup_directories(workspace)
+        kernel_dir = self.handle_kernel_source(workspace)
+        self.configure_kernel(self.config["kernel"], kernel_dir)
+        if "patches" in self.config["kernel"]:
+            self.apply_patches(self.config["kernel"]["patches"], kernel_dir)
+        self.apply_default_kernel_options(kernel_dir)
+        self.build_kernel(kernel_dir)
+        self.copy_kernel_to_output(kernel_dir, dir_paths["output_dir"])
+        return dir_paths
+
+    def setup_directories(self, workspace):
+        dir_paths = {
+            "kernel_dir": os.path.join(workspace, "kernel"),
+            "output_dir": os.path.join(workspace, "output_vms"),
+        }
+        for dir_name, dir_path in dir_paths.items():
+            os.makedirs(dir_path, exist_ok=True)
+        return dir_paths
+
+    def handle_kernel_source(self, workspace):
+        kernel_version = self.config["kernel"]["version"]
+        kernel_dir = os.path.join(workspace, "kernel")
+        kernel_tar_path = os.path.join(kernel_dir, f"linux-{kernel_version}.tar.xz")
+
+        if not os.path.exists(kernel_tar_path):
+            logger.info("Kernel source tarball does not exist, downloading...")
+            kernel_url = self.config["kernel"].get("url")
+            self.download_kernel_source(kernel_version, kernel_tar_path, url=kernel_url)
+
+        logger.info("Extracting tar")
+        extracted_kernel_dir = self.extract_kernel_tarball(kernel_tar_path, kernel_dir)
+
+        if os.path.exists(extracted_kernel_dir):
+            logger.info("Extracted kernel directory exists....")
+            return extracted_kernel_dir
+        else:
+            raise Exception("Failed to locate the extracted kernel source directory.")
+
     """Download the kernel source tarball, optionally with a specified URL"""
 
     def download_kernel_source(self, kernel_version, download_path, url=None):

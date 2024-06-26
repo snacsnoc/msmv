@@ -111,40 +111,11 @@ class VMManager:
         for dir_name, dir_path in dir_paths.items():
             os.makedirs(dir_path, exist_ok=True)
 
-        # Configuring the kernel
         kernel_builder = KernelBuilder(config)
-        # Handling kernel tarball and directory existence
-        kernel_tar_path = os.path.join(
-            workspace, f"linux-{config['kernel']['version']}.tar.xz"
+        kernel_path = kernel_builder.setup_and_build_kernel(workspace)
+        logger.info(
+            f"Kernel built successfully. Output directory: {kernel_path['output_dir']}"
         )
-        kernel_version = config["kernel"]["version"]
-        if not os.path.exists(kernel_tar_path):
-            logger.info("Kernel source tarball does not exist, downloading...")
-            kernel_url = config["kernel"].get("url")
-            kernel_builder.download_kernel_source(
-                kernel_version, kernel_tar_path, url=kernel_url
-            )
-
-        logger.info("extracting tar")
-        extracted_kernel_dir = kernel_builder.extract_kernel_tarball(
-            kernel_tar_path, workspace
-        )
-
-        if os.path.exists(extracted_kernel_dir):
-            logger.info("extracted kernel dir exists....")
-            dir_paths["kernel_dir"] = extracted_kernel_dir
-        else:
-            # If extraction fails or directory does not exist, throw an error
-            # TODO: do something productive
-            raise Exception("Failed to locate the extracted kernel source directory.")
-
-        kernel_builder.configure_kernel(config["kernel"], dir_paths["kernel_dir"])
-        if "patches" in config["kernel"]:
-            kernel_builder.apply_patches(
-                config["kernel"]["patches"], dir_paths["kernel_dir"]
-            )
-        kernel_builder.apply_default_kernel_options(dir_paths["kernel_dir"])
-        kernel_builder.build_kernel(dir_paths["kernel_dir"])
 
         # TODO: do something better than grabbing the first application
         app_details = ConfigParser.get_first_application(config)
