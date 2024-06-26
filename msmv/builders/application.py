@@ -32,6 +32,7 @@ class ApplicationBuilder:
         # Set the environment variables
         self.env = os.environ.copy()
         self.env["CC"] = self.compiler
+        self.env["LD"] = self.linker
 
     """Download and extract the application source code."""
 
