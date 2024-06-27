@@ -118,12 +118,12 @@ class VMManager:
         )
 
         # TODO: do something better than grabbing the first application
-        app_details = ConfigParser.get_first_application(config)
-        app_builder = ApplicationBuilder(config)
+        first_app_details = ConfigParser.get_first_application(config)
+        app_builder = ApplicationBuilder(first_app_details, dir_paths["rootfs_dir"])
         # Download and extract the application
-        app_source_dir = app_builder.download_and_extract_app(
-            app_details, dir_paths["apps_dir"]
-        )
+        # app_source_dir = app_builder.download_and_extract_app(
+        #     first_app_details, dir_paths["apps_dir"]
+        # )
 
         # image_name = config["output"].get("image_name", "output_image")
         # image_path = os.path.join(output_dir, f"{image_name}.qcow2")
@@ -136,15 +136,15 @@ class VMManager:
         rootfs_builder.setup_rootfs(dir_paths["rootfs_dir"])
 
         # Configure and build the application using the actual source directory path
-        app_builder.configure_and_build_app(
-            app_details, dir_paths["apps_dir"], app_source_dir, dir_paths["rootfs_dir"]
+        app_builder.setup_and_build_app(
+            dir_paths["apps_dir"],
         )
         # Write a simple init executable and have it run out app's output executable upon VM start
         logger.info(
-            f"Compiling init.c with start program {app_details['output_executable_path']}"
+            f"Compiling init.c with start program {first_app_details['output_executable_path']}"
         )
         ApplicationHelpers.compile_init_c(
-            dir_paths["rootfs_dir"], app_details["output_executable_path"]
+            dir_paths["rootfs_dir"], first_app_details["output_executable_path"]
         )
 
         # Compile and include an 'ifconfig' replacement in C
@@ -152,8 +152,8 @@ class VMManager:
         # This negates us from having to include additional common utils
         # in the target VM at the expense of having to...write C code
         if (
-            "include_net" in app_details
-            and app_details["include_net"]
+            "include_net" in first_app_details
+            and first_app_details["include_net"]
             and config["boot"].get("network")
         ):
             # compile_network_config_utility(rootfs_dir)
