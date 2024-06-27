@@ -25,7 +25,7 @@ class ApplicationBuilder:
         )
         logger.info(self.config)
         self.install_command = (
-            self.config["install_command"] + f" DESTDIR={rootfs_path}/usr/local"
+            self.config["install_command"] + f" DESTDIR={rootfs_path}"
         )
 
         # Set the environment variables
