@@ -114,7 +114,7 @@ class VMManager:
         kernel_builder = KernelBuilder(config)
         kernel_path = kernel_builder.setup_and_build_kernel(workspace)
         logger.info(
-            f"Kernel built successfully. Output directory: {kernel_path['output_dir']}"
+            f"Kernel built successfully. Build directory: {kernel_path['kernel_build']}"
         )
 
         # TODO: do something better than grabbing the first application
@@ -128,7 +128,7 @@ class VMManager:
         # image_name = config["output"].get("image_name", "output_image")
         # image_path = os.path.join(output_dir, f"{image_name}.qcow2")
         # create_qemu_image(image_path)
-        kernel_path = os.path.join(dir_paths["kernel_dir"], "arch/arm64/boot/Image")
+        # kernel_path = os.path.join(dir_paths["kernel_dir"], "arch/arm64/boot/Image")
         initrd_path = os.path.join(dir_paths["output_dir"], "rootfs.cpio")
 
         logger.info(f'Setting up rootfs in {dir_paths["rootfs_dir"]}')
@@ -170,9 +170,6 @@ class VMManager:
         # TODO: this is mostly a hack and subverts us from having to compile ncurses
         ApplicationHelpers.find_and_copy_vt(dir_paths["rootfs_dir"])
 
-        kernel_builder.copy_kernel_to_output(
-            dir_paths["kernel_dir"], dir_paths["output_dir"]
-        )
         logger.info("Creating uncompressed cpio")
         rootfs_builder.make_uncompressed_cpio(
             dir_paths["rootfs_dir"], dir_paths["output_dir"]
@@ -186,7 +183,8 @@ class VMManager:
         # )
         logger.info("Built image! Done!")
 
-        logger.info(f"Kernel output path {kernel_path}")
+        logger.info(f"Kernel build path {kernel_path['kernel_build']}")
+        logger.info(f"Kernel output path {kernel_path['kernel_image']}")
         logger.info(f"Initrd output path {initrd_path}")
         # Use script args to optionally clear the workspace after building
         # clean_workspace(workspace)

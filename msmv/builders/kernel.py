@@ -43,6 +43,12 @@ class KernelBuilder:
     def setup_and_build_kernel(self, workspace):
         dir_paths = self.setup_directories(workspace)
         kernel_dir = self.handle_kernel_source(workspace)
+        # TODO: refactor this
+        dir_paths["kernel_build"] = kernel_dir
+        dir_paths["kernel_image"] = os.path.join(
+            dir_paths["output_dir"], self.kernel_image
+        )
+
         self.configure_kernel(self.config["kernel"], kernel_dir)
         if "patches" in self.config["kernel"]:
             self.apply_patches(self.config["kernel"]["patches"], kernel_dir)
@@ -205,8 +211,13 @@ class KernelBuilder:
     """"Copy the kernel to the output_vm directory"""
 
     def copy_kernel_to_output(self, kernel_dir, output_dir):
-        # Copy the kernel from arch/{kernel_arch}/boot/{kernel_image} to the specified dir
-        kernel_image_path = (
-            f"{kernel_dir}/arch/{self.kernel_arch}/boot/{self.kernel_image}"
+        kernel_image_path = os.path.join(
+            kernel_dir, "arch", self.kernel_arch, "boot", self.kernel_image
         )
+        logger.info(f"Copying kernel from {kernel_image_path} to {output_dir}")
+
+        if not os.path.exists(kernel_image_path):
+            raise FileNotFoundError(f"Kernel image not found at {kernel_image_path}")
+
         shutil.copy(kernel_image_path, output_dir)
+        return self.kernel_image
