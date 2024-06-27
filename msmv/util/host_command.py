@@ -14,6 +14,7 @@ class HostCommand:
         stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
         env=None,
+        verbose=False,
     ):
         print(f"Running command: {' '.join(command)} in dir {cwd}")
         try:
@@ -28,13 +29,16 @@ class HostCommand:
                 env=env,
             ) as process:
                 try:
-                    for line in process.stdout:
-                        # Real-time feedback from stdout
-                        # TODO: make verbose output optional
-                        print(line, end="")
-                    # Wait for the process to complete and get stderr
-                    stderr = process.communicate(timeout=timeout)[1]
-                    print(stderr)
+                    if verbose:
+                        for line in process.stdout:
+                            print(line, end="")
+                    else:
+                        # Wait for the process to complete and get stderr
+                        stdout, stderr = process.communicate(timeout=timeout)
+                        if stdout:
+                            print(stdout)
+                        if stderr:
+                            print(stderr)
                     if process.returncode != 0:
                         print("Error executing command:", stderr)
                         exit(1)
