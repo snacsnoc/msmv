@@ -10,12 +10,10 @@ logger.setLevel(logging.INFO)
 
 
 class ApplicationBuilder:
-    def __init__(self, config):
+    def __init__(self, config, rootfs_path):
         self.config = config
         self.default_make_command = os.getenv("MAKE_COMMAND", "make -j8")
-        self.default_install_command = os.getenv(
-            "MAKE_INSTALL_COMMAND", "make install DESTDIR={install_dir}"
-        )
+
         # Default to 'cc' if not set
         self.compiler = os.getenv("CC", "cc")
 
@@ -25,8 +23,9 @@ class ApplicationBuilder:
         self.build_command = self.config.get("application", {}).get(
             "build_command", self.default_make_command
         )
-        self.install_command = self.config.get("application", {}).get(
-            "install_command", self.default_install_command
+        logger.info(self.config)
+        self.install_command = (
+            self.config["install_command"] + f" DESTDIR={rootfs_path}/usr/local"
         )
 
         # Set the environment variables
@@ -66,9 +65,15 @@ class ApplicationBuilder:
 
     """Configure and build the application."""
 
-    def configure_and_build_app(
-        self, app_details, app_dir, app_source_dir, install_dir
-    ):
+    def setup_and_build_app(self, app_dir):
+        app_source_dir = self.download_and_extract_app(self.config, app_dir)
+
+        self.configure_app(self.config, app_source_dir)
+        self.compile_app(app_source_dir)
+
+        self.install_app_to_output(app_source_dir)
+
+    def configure_app(self, app_details, app_source_dir):
         # Use shlex to split strings a shell would
         config_command = shlex.split(app_details["config_script"])
 
@@ -80,15 +85,19 @@ class ApplicationBuilder:
 
         logger.info("Config script completed.")
 
-        logger.info(f"Building application {app_details} with {self.env}")
+    def compile_app(self, app_source_dir):
+        logger.info(f"Building application {self.config} with {self.env}")
         # Use the build command from the TOML file or the default if not specified
         HostCommand.run_command(
             shlex.split(self.build_command), cwd=app_source_dir, env=self.env
         )
         logger.info("Application built.")
-        logger.info(f"Installing application to {install_dir}...")
+        self.install_app_to_output(app_source_dir)
+
+    def install_app_to_output(self, app_source_dir):
+        logger.info(self.config.get("application", {}))
+        logger.info(f"Installing application with {self.install_command}")
 
         HostCommand.run_command(
             shlex.split(self.install_command), cwd=app_source_dir, env=self.env
         )
-        logger.info("Application installed.")
