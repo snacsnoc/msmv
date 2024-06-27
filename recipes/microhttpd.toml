@@ -12,6 +12,8 @@ patches = ["patches/disable_unused_drivers.patch"]
 version = "latest"
 url = "http://www.acme.com/software/micro_httpd/micro_httpd_14Aug2014.tar.gz"
 config_script = "scripts/configure_microhttpd.sh"
+build_command = "make -j8"
+install_command = "make install"
 
 [boot]
 cmdline = "console=ttyS0 root=/dev/ram0"

@@ -12,6 +12,8 @@ patches = ["patches/disable_unused_drivers.patch"]
 version = "latest"
 url = "http://hisham.hm/htop/releases/3.1.0/htop-3.1.0.tar.gz"
 config_script = "scripts/configure_htop.sh"
+build_command = "make -j8"
+install_command = "make install"
 
 [boot]
 cmdline = "console=ttyS0"
