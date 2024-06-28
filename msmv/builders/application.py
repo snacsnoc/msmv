@@ -93,7 +93,7 @@ class ApplicationBuilder:
         logger.info("Config script completed.")
 
     def compile_app(self, app_source_dir):
-        logger.info(f"Building application {self.config} ")
+        logger.info(f"Building application")
         # Use the build command from the TOML file or the default if not specified
         HostCommand.run_command(
             shlex.split(self.build_command), cwd=app_source_dir, env=self.env
@@ -101,10 +101,12 @@ class ApplicationBuilder:
         logger.info("Application built.")
 
     def check_compiled_app(self):
-        # Ensure the path does not start with a slash to respect the rootfs_path
-        output_executable_path = self.config["output_executable_path"].lstrip("/")
-        built_app = os.path.join(self.rootfs_path, output_executable_path)
+        # Get the first component of the path before any spaces
+        output_executable = self.config["output_executable_path"].split()[0]
+        output_executable_path = output_executable.lstrip("/")
 
+        # Construct the full path to the executable within the root filesystem
+        built_app = os.path.join(self.rootfs_path, output_executable_path)
         # Check if the output file exists
         if not os.path.exists(built_app):
             logger.error(
