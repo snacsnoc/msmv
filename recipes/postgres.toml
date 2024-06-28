@@ -76,10 +76,10 @@ SYSFB_SIMPLEFB = "n"
 name = "PostgreSQL"
 version = "16.3"
 url = "https://ftp.postgresql.org/pub/source/v16.3/postgresql-16.3.tar.gz"
-config_script = "./configure -q --without-readline --without-zlib --without-icu --without-python --without-selinux"
+config_script = "./configure --without-readline --without-zlib --without-icu --without-python --without-selinux LDFLAGS='-Bstatic -Wl,-Bdynamic -ldl -lm -static' CFLAGS='-static'"
 build_command = "make"
 install_command = "make install"
-output_executable_path = "/usr/local/pgsql/bin/postgres"
+output_executable_path = "/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data -p 5432"
 include_net = true
 
 [boot]
