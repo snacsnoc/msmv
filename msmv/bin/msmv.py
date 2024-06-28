@@ -146,7 +146,7 @@ class VMManager:
         ApplicationHelpers.compile_init_c(
             dir_paths["rootfs_dir"], first_app_details["output_executable_path"]
         )
-
+        ApplicationHelpers.create_etc_files(dir_paths["rootfs_dir"])
         # Compile and include an 'ifconfig' replacement in C
         #
         # This negates us from having to include additional common utils

@@ -362,3 +362,26 @@ class ApplicationHelpers:
         logger.info(
             f"Created resolv.conf at {resolv_conf_path} with nameserver 8.8.8.8"
         )
+
+    @staticmethod
+    def create_etc_files(output_dir):
+        etc_path = os.path.join(output_dir, "etc")
+        os.makedirs(etc_path, exist_ok=True)
+
+        # Create passwd file
+        passwd_path = os.path.join(etc_path, "passwd")
+        with open(passwd_path, "w") as passwd_file:
+            # Example content for a non-root user with minimal privilege
+            passwd_file.write("msmv:x:1001:1001:MicroVM User:/home/msmv:/bin/sh\n")
+        logger.info(f"Created passwd file at {passwd_path}")
+
+        # Create group file
+        group_path = os.path.join(etc_path, "group")
+        with open(group_path, "w") as group_file:
+            # Example group with minimal privilege
+            group_file.write("msmv:x:1001:\n")
+        logger.info(f"Created group file at {group_path}")
+
+        # Ensure proper permissions and ownership (if running as root during build)
+        os.chmod(passwd_path, 0o644)
+        os.chmod(group_path, 0o644)
