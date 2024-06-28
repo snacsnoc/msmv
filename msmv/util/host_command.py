@@ -19,6 +19,7 @@ class HostCommand:
         next_command=None,
     ):
         print(f"Running command: {' '.join(command)} in dir {cwd}")
+        process = None
         try:
             # Setup the first process
             process = subprocess.Popen(
@@ -31,7 +32,7 @@ class HostCommand:
                 env=env,
                 text=not binary_mode,
             )
-
+            next_process = None
             # If there's a next command, set it up to receive input from the first process
             if next_command:
                 next_process = subprocess.Popen(
@@ -56,8 +57,7 @@ class HostCommand:
                 print(output.decode() if not binary_mode else output)
 
             if exit_code != 0:
-                error_msg = error.decode() if not binary_mode else error
-                print(f"Error executing command: {error_msg}")
+                print(f"Error executing command: {error}")
                 exit(1)
 
             return output, error
