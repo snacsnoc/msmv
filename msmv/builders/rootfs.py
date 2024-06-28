@@ -13,8 +13,8 @@ USE_C_INIT = True
 
 
 class RootFSBuilder:
-    def __init__(self):
-        pass
+    def __init__(self, rootfs_path):
+        self.rootfs_path = rootfs_path
 
     """Check if the device node exists and is of the correct type"""
 
@@ -30,10 +30,10 @@ class RootFSBuilder:
             logger.error(f"Error checking device at {path}: {str(e)}")
         return False
 
-    def setup_rootfs(self, output_dir):
+    def setup_rootfs(self):
         # root_dir = os.path.join(output_dir, "root")
         # os.makedirs(root_dir, exist_ok=True)
-
+        output_dir = self.rootfs_path
         # Create the essential directories
         essential_dirs = [
             "tmp",
@@ -134,26 +134,27 @@ class RootFSBuilder:
         # Change directory to the rootfs path to ensure relative paths in the cpio archive
         os.chdir(rootfs_path)
 
-        # Create a pipeline to find all files and directories starting from the current directory
-        # TODO: refactor to use run_command()
-        with subprocess.Popen(["find", ".", "-print0"], stdout=subprocess.PIPE) as ps:
-            with open(cpio_path, "wb") as f:
-                # Create the CPIO archive from the find command's output
-                with subprocess.Popen(
-                    ["cpio", "--null", "-ov", "--format=newc"],
-                    stdin=ps.stdout,
-                    stdout=f,
-                ) as cpio:
-                    # Wait for the cpio command to finish
-                    cpio.communicate()
+        # Command to find files and output null-separated names
+        find_command = ["find", ".", "-print0"]
+
+        # Command to create cpio archive, with output directed to a file
+        cpio_command = ["cpio", "--null", "-ov", "--format=newc"]
+
+        # Run find and pipe to cpio
+        stdout, stderr = HostCommand.run_command(
+            find_command,
+            cwd=self.rootfs_path,
+            next_command=cpio_command,
+            stdout=open(cpio_path, "wb"),
+            binary_mode=True,
+        )
 
         # Restore the original working directory
         os.chdir(current_dir)
 
-        # Check if the processes completed successfully
-        if ps.returncode or cpio.returncode:
-            raise Exception(
-                "Error in creating the CPIO archive, one of the subprocesses failed."
-            )
-
-        logger.info(f"CPIO archive created successfully at: {cpio_path}")
+        # Check if the cpio operation was successful
+        if stderr:
+            logger.error(f"Error in creating the CPIO archive: {stderr}")
+            raise Exception("Failed to create the CPIO archive.")
+        else:
+            logger.info(f"CPIO archive created successfully at: {cpio_path}")
