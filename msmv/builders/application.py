@@ -12,6 +12,7 @@ logger.setLevel(logging.INFO)
 class ApplicationBuilder:
     def __init__(self, config, rootfs_path):
         self.config = config
+        self.rootfs_path = rootfs_path
         self.default_make_command = os.getenv("MAKE_COMMAND", "make -j8")
 
         # Default to 'cc' if not set
@@ -69,8 +70,9 @@ class ApplicationBuilder:
         app_source_dir = self.download_and_extract_app(self.config, app_dir)
 
         self.configure_app(self.config, app_source_dir)
+        # TODO: check if compilation is successful before installing
         self.compile_app(app_source_dir)
-
+        self.check_compiled_app()
         self.install_app_to_output(app_source_dir)
 
     def configure_app(self, app_details, app_source_dir):
@@ -92,7 +94,15 @@ class ApplicationBuilder:
             shlex.split(self.build_command), cwd=app_source_dir, env=self.env
         )
         logger.info("Application built.")
-        self.install_app_to_output(app_source_dir)
+
+    def check_compiled_app(self):
+        built_app = os.path.join(
+            self.rootfs_path, self.config["output_executable_path"]
+        )
+        # Check if the output file exists
+        if not os.path.exists(built_app):
+            logger.error("Application not found")
+            exit(1)
 
     def install_app_to_output(self, app_source_dir):
         logger.info(self.config.get("application", {}))
