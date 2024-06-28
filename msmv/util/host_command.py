@@ -42,6 +42,7 @@ class HostCommand:
                     if process.returncode != 0:
                         print("Error executing command:", stderr)
                         exit(1)
+                    return stdout, stderr
                 except subprocess.TimeoutExpired:
                     process.kill()
                     _, stderr = process.communicate()
