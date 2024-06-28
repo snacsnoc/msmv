@@ -26,7 +26,7 @@ class ApplicationBuilder:
         )
         logger.info(self.config)
         self.install_command = (
-            self.config["install_command"] + f" DESTDIR={rootfs_path}"
+            self.config["install_command"] + f" DESTDIR={self.rootfs_path}"
         )
 
         # Set the environment variables
@@ -40,11 +40,16 @@ class ApplicationBuilder:
         self, app_details, app_dir, common_tarball_name="application.tar.gz"
     ):
         tar_path = os.path.join(app_dir, common_tarball_name)
-        # Download the application tarball
-        logger.info(f"Downloading tarball to: {tar_path}")
-        HostCommand.run_command(
-            ["wget", app_details["url"], "-O", common_tarball_name], cwd=app_dir
-        )
+
+        # Check if the tarball file exists and skip downloading if it does
+        if not os.path.isfile(tar_path):
+            logger.info(f"Tarball not found at {tar_path}. Downloading...")
+            HostCommand.run_command(
+                ["wget", app_details["url"], "-O", common_tarball_name], cwd=app_dir
+            )
+        else:
+            logger.info(f"Tarball already exists at {tar_path}. Skipping download.")
+
         # Extract the application
         logger.info(f"Extracting tarball: {tar_path}. cwd is {app_dir}")
         # Check if the tarball file exists
@@ -72,8 +77,8 @@ class ApplicationBuilder:
         self.configure_app(self.config, app_source_dir)
         # TODO: check if compilation is successful before installing
         self.compile_app(app_source_dir)
-        self.check_compiled_app()
         self.install_app_to_output(app_source_dir)
+        self.check_compiled_app()
 
     def configure_app(self, app_details, app_source_dir):
         # Use shlex to split strings a shell would
@@ -88,7 +93,7 @@ class ApplicationBuilder:
         logger.info("Config script completed.")
 
     def compile_app(self, app_source_dir):
-        logger.info(f"Building application {self.config} with {self.env}")
+        logger.info(f"Building application {self.config} ")
         # Use the build command from the TOML file or the default if not specified
         HostCommand.run_command(
             shlex.split(self.build_command), cwd=app_source_dir, env=self.env
@@ -96,12 +101,15 @@ class ApplicationBuilder:
         logger.info("Application built.")
 
     def check_compiled_app(self):
-        built_app = os.path.join(
-            self.rootfs_path, self.config["output_executable_path"]
-        )
+        # Ensure the path does not start with a slash to respect the rootfs_path
+        output_executable_path = self.config["output_executable_path"].lstrip("/")
+        built_app = os.path.join(self.rootfs_path, output_executable_path)
+
         # Check if the output file exists
         if not os.path.exists(built_app):
-            logger.error("Application not found")
+            logger.error(
+                f"Application not found at {built_app} in rootfs {self.rootfs_path}"
+            )
             exit(1)
 
     def install_app_to_output(self, app_source_dir):
