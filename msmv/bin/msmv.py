@@ -132,8 +132,8 @@ class VMManager:
         initrd_path = os.path.join(dir_paths["output_dir"], "rootfs.cpio")
 
         logger.info(f'Setting up rootfs in {dir_paths["rootfs_dir"]}')
-        rootfs_builder = RootFSBuilder()
-        rootfs_builder.setup_rootfs(dir_paths["rootfs_dir"])
+        rootfs_builder = RootFSBuilder(dir_paths["rootfs_dir"])
+        rootfs_builder.setup_rootfs()
 
         # Configure and build the application using the actual source directory path
         app_builder.setup_and_build_app(
