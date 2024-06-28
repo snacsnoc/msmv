@@ -12,6 +12,15 @@ logging.basicConfig(level=logging.INFO)
 
 
 class ApplicationHelpers:
+
+    """
+    This method compiles a statically linked init binary
+    This init mounts the required filesystems and conditionally inserts network setup code
+    It also boots the target program upon execution, allow users to directly start the target software
+    without having to manually start it.
+
+    """
+
     @staticmethod
     def compile_init_c(output_dir, start_program_path="/bin/sh", include_net=True):
         # Split the start_program_path into parts for argv
