@@ -116,7 +116,7 @@ class KernelBuilder:
                 )
         except requests.exceptions.RequestException as e:
             logger.error(f"Error downloading kernel source: {e}")
-            raise Exception(f"Failed to download kernel source: {response.status_code}")
+            raise Exception(f"Failed to download kernel source due to: {str(e)}")
 
     """Extract the kernel source tarball to a specified directory"""
 
