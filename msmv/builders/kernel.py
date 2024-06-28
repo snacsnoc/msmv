@@ -219,5 +219,8 @@ class KernelBuilder:
         if not os.path.exists(kernel_image_path):
             raise FileNotFoundError(f"Kernel image not found at {kernel_image_path}")
 
-        shutil.copy(kernel_image_path, output_dir)
-        return self.kernel_image
+        if not shutil.copy(kernel_image_path, output_dir):
+            logger.error("Failed to copy kernel")
+            exit(1)
+        else:
+            return self.kernel_image
