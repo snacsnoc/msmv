@@ -1,0 +1,65 @@
+[general]
+name = "PostgreSQLMicroVM"
+description = "Lightweight MicroVM environment with PostgreSQL database server"
+target_arch = "aarch64"
+
+[kernel]
+version = "6.9.7"
+
+[kernel.options]
+BINFMT_ELF = "y"
+BINFMT_SCRIPT = "y"
+EXPERT = "y"
+SWAP = "n"
+UNIX = "y"
+TMPFS = "y"
+DEVTMPFS = "y"
+DEVTMPFS_MOUNT = "y"
+PROC_FS = "y"
+SYSFS = "y"
+BLOCK = "y"
+PRINTK = "y"  # Enable printk for debugging purposes
+VT = "n"
+VT_CONSOLE = "n"
+HW_CONSOLE = "n"
+INPUT_KEYBOARD = "n"
+INPUT_MOUSE = "n"
+INPUT_EVDEV = "n"
+TTY = "y"
+HID_SUPPORT = "n"
+UNIX98_PTYS = "y"
+SERIO = "n"
+FB = "n"
+FB_SIMPLE = "n"
+FB_CORE = "n"
+VGA_CONSOLE = "n"
+SYSFB = "n"
+SYSFB_SIMPLEFB = "n"
+DEBUG_INFO_NONE = "y"
+PREEMPT_NONE_BUILD = "y"
+TINY_RCU = "y"
+BLK_DEV_INITRD = "y"
+CC_OPTIMIZE_FOR_SIZE = "y"
+SERIAL_AMBA_PL011 = "y"
+SERIAL_AMBA_PL011_CONSOLE = "y"
+SERIAL_CORE = "y"
+SERIAL_CORE_CONSOLE = "y"
+SERIAL_DEV_BUS = "y"
+SERIAL_DEV_CTRL_TTYPORT = "y"
+NETWORK = "y"
+
+[applications.postgresql]
+name = "PostgreSQL"
+version = "16.3"
+url = "https://ftp.postgresql.org/pub/source/v16.3/postgresql-16.3.tar.gz"
+config_script = "./configure --without-readline --without-zlib --without-icu"
+build_command = "make world"
+install_command = "make install-world"
+output_executable_path = "/usr/local/pgsql/bin/postgres"
+
+[boot]
+cmdline = "console=ttyAMA0"
+
+[output]
+format = "qemu_image"
+image_name = "PostgreSQLMicroVM.img"
