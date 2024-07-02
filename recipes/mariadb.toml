@@ -1,3 +1,4 @@
+# This doesn't work, don't use this
 [general]
 name = "MariaDBMicroVM"
 description = "Lightweight MicroVM environment with MariaDB database server"
@@ -76,7 +77,7 @@ SYSFB_SIMPLEFB = "n"
 name = "MariaDB"
 version = "11.6"
 url = "https://archive.mariadb.org/mariadb-11.6/source/mariadb-11.6.0.tar.gz"
-config_script = "cmake . -DWITH_STATIC=ON -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_PARTITION_STORAGE_ENGINE=1 -DPLUGIN_AUTH_PAM=NO -DWITHOUT_TOKUDB=1 -DWITHOUT_ROCKSDB=1 -DPLUGIN_TOKUDB=NO -DPLUGIN_ROCKSDB=NO -DWITH_SSL=bundled -DWITH_ZLIB=bundled -DWITH_PCRE=bundled -DWITH_EDITLINE=bundled -DBUILD_CONFIG=mysql_release -DPLUGIN_PARTITION=STATIC -DWITH_EMBEDDED_SERVER=ON -DWITH_SYSTEMD=no -DSKIP_TESTS=ON -DCMAKE_EXE_LINKER_FLAGS='-static -static-libgcc -static-libstdc++ -lnettle -lgmp' -DCMAKE_FIND_LIBRARY_SUFFIXES='.a' -DWITH_DYNAMIC_PLUGINS=OFF"
+config_script = "cmake . -DCONNECT_WITH_MYSQL=ON -DWITH_STATIC=ON -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_PARTITION_STORAGE_ENGINE=1 -DPLUGIN_AUTH_PAM=NO -DWITH_LIBWRAP=OFF -DWITH_VALGRIND=OFF -DPLUGIN_TOKUDB=NO -DPLUGIN_ROCKSDB=NO -DPLUGIN_OQGRAPH=NO -DPLUGIN_MROONGA=NO -DPLUGIN_CASSANDRA=NO -DPLUGIN_TOKUDB=NO -DPLUGIN_SPHINX=NO -DWITH_ASAN=OFF -DPLUGIN_ROCKSDB=NO -DWITH_LIBFMT=system -DWITH_SSL=system -DWITH_PCRE=system -DWITH_ZLIB=system -DZLIB_LIBRARY=/usr/lib/aarch64-linux-gnu/libz.a -DWITH_LIBARCHIVE=system -DWITH_READLINE=ON -DPLUGIN_AUTH_GSSAPI_CLIENT=OFF -DBUILD_CONFIG=mysql_release -DPLUGIN_PARTITION=STATIC -DWITH_EMBEDDED_SERVER=ON -DWITH_SYSTEMD=no -DSKIP_TESTS=ON -DCMAKE_EXE_LINKER_FLAGS='-static -static-libgcc -static-libstdc++ -lnettle -lgmp -lz' -DCMAKE_FIND_LIBRARY_SUFFIXES='.a' -DWITH_DYNAMIC_PLUGINS=OFF"
 build_command = "make"
 install_command = "make install"
 output_executable_path = "/usr/local/mysql/bin/mariadbd --datadir=/var/lib/mysql --socket=/var/run/mysqld/mysqld.sock --port=3306 --bind-address=127.0.0.1 --log-error=/var/log/mysql/error.log --pid-file=/var/run/mysqld/mysqld.pid"

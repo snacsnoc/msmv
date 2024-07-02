@@ -1,3 +1,4 @@
+# This doesn't work, don't use this
 [general]
 name = "PostgreSQLMicroVM"
 description = "Lightweight MicroVM environment with PostgreSQL database server"
@@ -76,7 +77,7 @@ SYSFB_SIMPLEFB = "n"
 name = "PostgreSQL"
 version = "16.3"
 url = "https://ftp.postgresql.org/pub/source/v16.3/postgresql-16.3.tar.gz"
-config_script = "./configure --without-readline --without-zlib --without-icu --without-python --without-selinux LDFLAGS='-Bstatic -Wl,-Bdynamic -ldl -lm -static' CFLAGS='-static'"
+config_script = "./configure --without-readline --without-zlib --without-icu --disable-rpath --disable-shared LDFLAGS='-Bstatic -lm -static -lc' CFLAGS='-static' LD_RUN_PATH=/lib"
 build_command = "make"
 install_command = "make install"
 output_executable_path = "/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data -p 5432"
