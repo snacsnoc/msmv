@@ -16,6 +16,9 @@ from msmv.util.workspace_helpers import WorkspaceHelpers
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+# Stub: run target software with a non-root user
+RUN_WITH_UNPRIV_USER_DEBUG = False
+
 
 class VMManager:
     def __init__(self, config_file="config.toml", build_dir="./"):
@@ -146,7 +149,9 @@ class VMManager:
         ApplicationHelpers.compile_init_c(
             dir_paths["rootfs_dir"], first_app_details["output_executable_path"]
         )
-        ApplicationHelpers.create_etc_files(dir_paths["rootfs_dir"])
+
+        if RUN_WITH_UNPRIV_USER_DEBUG:
+            ApplicationHelpers.create_etc_files(dir_paths["rootfs_dir"])
         # Compile and include an 'ifconfig' replacement in C
         #
         # This negates us from having to include additional common utils
