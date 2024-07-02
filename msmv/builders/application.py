@@ -21,9 +21,7 @@ class ApplicationBuilder:
         self.linker = os.getenv("LD", "ld")
 
         # Read from config or use defaults
-        self.build_command = self.config.get("application", {}).get(
-            "build_command", self.default_make_command
-        )
+        self.build_command = self.config.get("build_command", self.default_make_command)
         logger.info(self.config)
         self.install_command = (
             self.config["install_command"] + f" DESTDIR={self.rootfs_path}"
@@ -74,7 +72,10 @@ class ApplicationBuilder:
     def setup_and_build_app(self, app_dir):
         app_source_dir = self.download_and_extract_app(self.config, app_dir)
 
-        self.configure_app(self.config, app_source_dir)
+        # Check if the recipe has a config script (pre-compilation) command
+        if self.config.get("config_script") is not None:
+            self.configure_app(self.config, app_source_dir)
+
         # TODO: check if compilation is successful before installing
         self.compile_app(app_source_dir)
         self.install_app_to_output(app_source_dir)
@@ -94,6 +95,7 @@ class ApplicationBuilder:
 
     def compile_app(self, app_source_dir):
         logger.info(f"Building application")
+
         # Use the build command from the TOML file or the default if not specified
         HostCommand.run_command(
             shlex.split(self.build_command), cwd=app_source_dir, env=self.env
