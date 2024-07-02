@@ -10,68 +10,7 @@ Imagine Docker, except requiring a lot more effort. It’s like building a ship 
 # Usage
 ## Configuration
 
-Start by creating a TOML configuration file for your VM. Below is an example configuration for a VM designed to run [Lynx](https://lynx.invisible-island.net/), a text-based web browser:
-
-```toml
-[general]
-name = "NanoVM"
-description = "MicroVM environment with customized nano text editor"
-target_arch = "aarch64"
-
-[kernel]
-version = "6.9.4"
-url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.9.4.tar.xz"
-[kernel.options]
-BINFMT_ELF = "y"
-BINFMT_SCRIPT = "y"
-EXPERT = "y"
-SWAP = "n"
-UNIX = "y"
-TMPFS = "y"
-DEVTMPFS = "y"
-DEVTMPFS_MOUNT = "y"
-PROC_FS = "y"
-SYSFS = "y"
-BLOCK = "y"
-PRINTK = "y"
-VT = "y"
-VT_CONSOLE = "y"
-TTY = "y"
-HID_SUPPORT = "n"
-UNIX98_PTYS = "y"
-SERIO = "y"
-DEBUG_INFO_NONE = "y"
-PREEMPT_NONE_BUILD = "y"
-TINY_RCU = "y"
-BLK_DEV_INITRD = "y"
-CC_OPTIMIZE_FOR_SIZE = "y"
-SERIAL_AMBA_PL011 = "y"
-SERIAL_AMBA_PL011_CONSOLE = "y"
-SERIAL_CORE = "y"
-SERIAL_CORE_CONSOLE = "y"
-SERIAL_DEV_BUS = "y"
-SERIAL_DEV_CTRL_TTYPORT = "y"
-
-
-
-[applications.nano]
-name = "Nano"
-version = "8.0"
-url = "https://www.nano-editor.org/dist/v8/nano-8.0.tar.gz"
-config_script = "./configure CFLAGS=-static LDFLAGS=-static"
-output_executable_path = "/usr/local/bin/nano"
-
-[boot]
-cmdline = "console=ttyAMA0"
-initramfs = true
-
-[output]
-format = "qemu_image"
-image_name = "NanoVM.img"
-
-```
-
-For other software, please see the `recipes/` directory for examples.
+Start by creating a TOML configuration file for your VM. Please see the `recipes/` directory for examples.
 
 # Building the Virtual Machine Image
 Note: it is recommended to use a virtual environment (venv)
@@ -83,7 +22,7 @@ pip install -r requirements.txt
 Run the build script with your configuration file:
 
 ```bash
-python -m msmv.bin.msmv --config-file msvm_config.toml
+python -m msmv.bin.msmv --config-file my_application.toml
 ```
 __Options:__
 * `-c` or `--config-file` - sets the build (recipe) configuration file
@@ -91,7 +30,7 @@ __Options:__
 
 __Environment variables:__
 * `MAKE_COMMAND` - specify the `make` command, defaults to `make`
-  * For Mac OS, I would recommend `lkmake` https://github.com/markbhasawut/mac-linux-kdk
+  * For Mac OS, I would recommend `lkmake` for building the kernel https://github.com/markbhasawut/mac-linux-kdk
 * `CC` - specify the compiler to be used, defaults to `cc`
 * `LD` - specify the linker to be used, defaults to `ld`
 
